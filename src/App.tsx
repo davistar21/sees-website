@@ -1,7 +1,7 @@
 import "./App.css";
 
 function App() {
-  return <></>;
+  return <div className="min-h-screen"></div>;
 }
 
 export default App;
