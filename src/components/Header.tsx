@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { Menu } from "lucide-react";
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
@@ -25,7 +25,7 @@ const Header = () => {
             className="md:hidden flex items-center "
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            {/* <Menu size={24} /> */}Menu
+            <Menu size={24} className="text-black" />
           </button>
         </div>
         {menuOpen && (
