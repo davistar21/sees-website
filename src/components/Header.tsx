@@ -3,7 +3,7 @@ import { Menu } from "lucide-react";
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   return (
-    <div className="mb-30">
+    <div>
       <header
         className="
     fixed top-0 left-0 right-0 z-50 shadow-md "

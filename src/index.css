@@ -1,11 +1,18 @@
 @import "tailwindcss";
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-}
+
 @theme {
   --color-swamp: #013f31;
 }
 button,
 a {
   cursor: pointer;
+}
+
+@font-face {
+  font-family: Manrope;
+  src: url(./assets/fonts/Manrope-VariableFont_wght.ttf);
+}
+
+*{
+  font-family: 'manrope', sans-serif;
 }
