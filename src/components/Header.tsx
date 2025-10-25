@@ -1,42 +1,106 @@
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const toggleMenu = () => setMenuOpen((prev) => !prev);
+
   return (
-    <div className="mb-30 ">
-      <header
-        className="
-    fixed top-0 left-0 right-0 z-50 shadow-md bg-white"
-      >
-        <div className="flex gap-4 items-center justify-between px-2 md:px-4">
-          <div className="w-[87px] h-[87px]">
-            <img src="/sees-logo-black.png" alt="logo" />
+    <div className="">
+      <header className="fixed top-0 left-0 right-0 z-50 shadow-md bg-white">
+        <div className="flex gap-4 items-center justify-between px-4 md:px-8">
+          <div className="w-[87px] h-[87px] flex-shrink-0">
+            <img
+              src="/sees-logo-black.png"
+              alt="logo"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <nav className="hidden md:flex gap-8 items-center">
-            {headerLinks.map((link, index) => (
-              <HeaderLink {...link} key={index} />
+            {headerLinks.map((link, i) => (
+              <HeaderLink {...link} key={i} />
             ))}
           </nav>
-          <div className="hidden md:flex bg-swamp text-white py-2 px-6 rounded-2xl text-[20px]">
+
+          <div className="hidden md:flex bg-swamp text-white py-2 px-6 rounded-2xl text-[20px] font-semibold hover:bg-[#02543d] transition-colors cursor-pointer select-none">
             <a href="/contact">Contact Us</a>
           </div>
+
           <button
-            className="md:hidden flex items-center "
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={toggleMenu}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            className="md:hidden flex items-center justify-center p-2 rounded-md hover:bg-gray-100 transition"
           >
-            <Menu size={24} className="text-black" />
+            <motion.div
+              initial={false}
+              animate={{ rotate: menuOpen ? 90 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {menuOpen ? (
+                <X size={28} className="text-swamp" />
+              ) : (
+                <Menu size={28} className="text-swamp" />
+              )}
+            </motion.div>
           </button>
         </div>
-        {menuOpen && (
-          <div className="md:hidden overflow-hidden ">
-            <nav className="flex flex-col gap-4 p-4">
-              {headerLinks.map((link, index) => (
-                <HeaderLink {...link} key={index} />
-              ))}
-            </nav>
-          </div>
-        )}
+
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.nav
+              key="mobile-menu"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              className="md:hidden overflow-hidden bg-white shadow-inner"
+            >
+              <motion.ul
+                initial="hidden"
+                animate="visible"
+                exit="hidden"
+                variants={{
+                  visible: {
+                    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+                  },
+                  hidden: {
+                    transition: { staggerChildren: 0.05, staggerDirection: -1 },
+                  },
+                }}
+                className="flex flex-col gap-4 p-6"
+              >
+                {headerLinks.map((link, i) => (
+                  <motion.li
+                    key={i}
+                    variants={{
+                      visible: { opacity: 1, y: 0 },
+                      hidden: { opacity: 0, y: -10 },
+                    }}
+                  >
+                    <HeaderLink {...link} mobile />
+                  </motion.li>
+                ))}
+                <motion.li
+                  variants={{
+                    visible: { opacity: 1, y: 0 },
+                    hidden: { opacity: 0, y: -10 },
+                  }}
+                >
+                  <a
+                    href="/contact"
+                    className="block bg-swamp text-white py-3 px-6 rounded-2xl text-center text-[20px] font-semibold hover:bg-[#02543d] transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Contact Us
+                  </a>
+                </motion.li>
+              </motion.ul>
+            </motion.nav>
+          )}
+        </AnimatePresence>
       </header>
     </div>
   );
@@ -48,6 +112,7 @@ type LinkProp = {
   name: React.ReactNode;
   href: string;
 };
+
 const headerLinks: LinkProp[] = [
   { name: "Home", href: "/" },
   { name: "Events", href: "/events" },
@@ -56,9 +121,21 @@ const headerLinks: LinkProp[] = [
   { name: "Resources", href: "/resources" },
 ];
 
-const HeaderLink: React.FC<LinkProp> = ({ name, href }) => {
+const HeaderLink: React.FC<LinkProp & { mobile?: boolean }> = ({
+  name,
+  href,
+  mobile,
+}) => {
   return (
-    <a href={href} className="text-[20px]">
+    <a
+      href={href}
+      className={`text-[20px] font-medium transition-colors
+        ${
+          mobile
+            ? "text-swamp hover:text-[#02543d]"
+            : "text-gray-800 hover:text-swamp"
+        }`}
+    >
       {name}
     </a>
   );

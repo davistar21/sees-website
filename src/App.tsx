@@ -1,9 +1,12 @@
-import { Route, Routes } from "react-router-dom";
 import "./App.css";
-import Resources from "./routes/Resources";
+import Slider from "./components/EventSlider";
 
 function App() {
-  return <></>;
+  return (
+    <>
+      <Slider />
+    </>
+  );
 }
 
 export default App;
