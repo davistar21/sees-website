@@ -106,7 +106,7 @@ const Events = () => {
       <EventTabs tabs={tabs} activeTab={activeTab} onTabClick={setActiveTab} />
 
       <div className="flex flex-col gap-8 max-w-7xl px-8  mx-auto">
-        {[1, 2, 3].map((event, i) => (
+        {[1, 2, 3].map((_, i) => (
           <div
             key={i}
             className="flex flex-col md:flex-row gap-4 md:gap-8 justify-center"
