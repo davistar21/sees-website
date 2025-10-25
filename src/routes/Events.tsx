@@ -1,13 +1,4 @@
-import React, { useCallback } from "react";
 import EventSlider, { images } from "../components/EventSlider";
-
-interface EventImageProps {
-  imageSrc: string;
-  title: string;
-  date: string;
-  location: string;
-  time: string;
-}
 
 interface EventHighlightProps {
   imageSrc: string;

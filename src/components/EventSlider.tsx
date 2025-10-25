@@ -1,10 +1,8 @@
 import {
   ArrowLeft,
   ArrowRight,
-  Calendar,
   CalendarDays,
   Clock,
-  LocationEdit,
   MapPin,
 } from "lucide-react";
 import React, { useCallback } from "react";

@@ -1,5 +1,5 @@
 import { easeInOut, motion } from "framer-motion";
-import { Link2, PhoneCallIcon, PhoneForwarded } from "lucide-react";
+import { Link2, PhoneForwarded } from "lucide-react";
 import CardSwap, { Card } from "../components/CardSwap";
 type Member = {
   name: string;
@@ -14,14 +14,14 @@ type TeamSectionProps = {
   members: Member[];
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.2, duration: 0.6, ease: "easeOut" },
-  }),
-};
+// const fadeUp = {
+//   hidden: { opacity: 0, y: 40 },
+//   visible: (i: number) => ({
+//     opacity: 1,
+//     y: 0,
+//     transition: { delay: i * 0.2, duration: 0.6, ease: "easeOut" },
+//   }),
+// };
 const TopSection = () => {
   const membersImages = [...developers, ...designers].flatMap((e) => e.image);
   return (
