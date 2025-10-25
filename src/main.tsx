@@ -9,20 +9,22 @@ import Teams from "./routes/Teams.tsx";
 import Resources from "./routes/Resources.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Footer from "./components/Footer.tsx";
+import NotFound from "./routes/404.tsx";
 const router = createBrowserRouter([
-  //Add the routes here
   { path: "/", element: <App /> },
   { path: "/events", element: <Events /> },
   { path: "/executives", element: <Executives /> },
   { path: "/teams", element: <Teams /> },
   { path: "/resources", element: <Resources /> },
+  { path: "*", element: <NotFound /> },
 ]);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
-    <Header />
-
-    <Footer />
+    <div className="flex flex-col gap-2">
+      <Header />
+      <RouterProvider router={router} />
+      <Footer />
+    </div>
   </StrictMode>
 );
