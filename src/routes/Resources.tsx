@@ -1,4 +1,4 @@
-import { ArrowRight, MoveRight } from "lucide-react";
+import { MoveRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Resources = () => {
