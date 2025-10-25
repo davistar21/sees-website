@@ -70,7 +70,7 @@ const Header = () => {
                     transition: { staggerChildren: 0.05, staggerDirection: -1 },
                   },
                 }}
-                className="flex flex-col gap-4 p-6"
+                className="flex flex-col gap-4 p-6 items-center"
               >
                 {headerLinks.map((link, i) => (
                   <motion.li
@@ -88,10 +88,11 @@ const Header = () => {
                     visible: { opacity: 1, y: 0 },
                     hidden: { opacity: 0, y: -10 },
                   }}
+                  className="w-full"
                 >
                   <a
                     href="/contact"
-                    className="block bg-swamp text-white py-3 px-6 rounded-2xl text-center text-[20px] font-semibold hover:bg-[#02543d] transition-colors"
+                    className="block bg-swamp text-white py-3 px-6 rounded-2xl text-center text-lg font-semibold hover:bg-[#02543d] transition-colors"
                     onClick={() => setMenuOpen(false)}
                   >
                     Contact Us
@@ -129,7 +130,7 @@ const HeaderLink: React.FC<LinkProp & { mobile?: boolean }> = ({
   return (
     <a
       href={href}
-      className={`text-[20px] font-medium transition-colors
+      className={`text-lg md:text-[20px] font-medium transition-colors
         ${
           mobile
             ? "text-swamp hover:text-[#02543d]"
