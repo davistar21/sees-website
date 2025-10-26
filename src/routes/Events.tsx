@@ -84,7 +84,7 @@ const Events = () => {
   const tabs = ["Corporate events", "Sport events", "Fun events"];
 
   return (
-    <div className="mx-auto py-8 w-full">
+    <div className="mx-auto w-full pb-8">
       <div className="snap-y snap-mandatory  overflow-y-auto md:h-screen scrollbar">
         <div className="relative w-full  overflow-hidden h-screen flex flex-col items-center justify-center snap-center">
           <ImageSlider

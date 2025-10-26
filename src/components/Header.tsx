@@ -9,7 +9,7 @@ const Header = () => {
 
   return (
     <div className="">
-      <header className="fixed top-0 left-0 right-0 z-50 shadow-md bg-white">
+      <header className="fixed top-0 left-0 right-0 z-50 shadow-md bg-transparent">
         <div className="flex gap-4 items-center justify-between px-4 md:px-8">
           <div className="w-[87px] h-[87px] flex-shrink-0">
             <img

@@ -21,7 +21,7 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col">
       <Header />
       <RouterProvider router={router} />
       <Footer />

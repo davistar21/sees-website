@@ -1,6 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+html,
+body {
+  scroll-behavior: smooth;
+  margin: 0;
+}
+@utility bg-glass {
+  background: transparent;
+  backdrop-filter: blur(16px) brightness(1.2);
+  -webkit-backdrop-filter: blur(16px);
+}
 @custom-variant dark (&:is(.dark *));
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
