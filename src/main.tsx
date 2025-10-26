@@ -7,7 +7,6 @@ import Events from "./routes/Events.tsx";
 import Executives from "./routes/Executives.tsx";
 import Teams from "./routes/Teams.tsx";
 import Resources from "./routes/Resources.tsx";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Footer from "./components/Footer.tsx";
 import NotFound from "./routes/404.tsx";
 const router = createBrowserRouter([
