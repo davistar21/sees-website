@@ -1,6 +1,12 @@
 import { useRef, useEffect } from "react";
 import "./App.css";
 import "./styles/homepage.css"
+import Vision from "./components/Vision";
+import About from "./components/About";
+import Resources from "./routes/Resources";
+import ContentCard from "./components/ContentCard";
+import Hod from "./components/Hod";
+import Newsletter from "./components/Newsletter";
 const App = () => {
 
   type Events = {
@@ -67,7 +73,7 @@ useEffect(() => {
 }, [])
 
   return (
-    <div>
+    <div className="all-contents">
       <div className="main pt-[70px] md:pt-[87px]" ref={mainRef}>
         <div className="overlay"></div>
 
@@ -97,6 +103,21 @@ useEffect(() => {
           
         </div>
       </div>
+
+      <Vision />  
+      <About />
+
+      <div className="all">
+        <div className="contentcard-container">
+        <ContentCard img="/contenttwo.jpg"/>
+        <ContentCard img="/contentone.jpg"/>
+        <ContentCard img="/contenttwo.jpg"/>
+      </div>  
+      </div>
+
+      <Resources />
+      <Hod />
+      <Newsletter />
     </div>
   )
 }

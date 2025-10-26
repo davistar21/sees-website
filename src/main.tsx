@@ -7,6 +7,7 @@ import Events from "./routes/Events.tsx";
 import Executives from "./routes/Executives.tsx";
 import Teams from "./routes/Teams.tsx";
 import Resources from "./routes/Resources.tsx";
+import Footer from "./components/Footer.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 const router = createBrowserRouter([
@@ -22,5 +23,6 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Header />
       <RouterProvider router={router} />
+          <Footer />
   </StrictMode>
 );
