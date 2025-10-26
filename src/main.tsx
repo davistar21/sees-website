@@ -9,6 +9,7 @@ import Teams from "./routes/Teams.tsx";
 import Resources from "./routes/Resources.tsx";
 import Footer from "./components/Footer.tsx";
 import NotFound from "./routes/404.tsx";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
 const router = createBrowserRouter([
   { path: "/", element: <App /> },
   { path: "/events", element: <Events /> },
