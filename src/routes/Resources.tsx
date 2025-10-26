@@ -1,4 +1,5 @@
-import { ArrowRight } from "lucide-react";
+import { MoveRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Resources = () => {
   return (
@@ -18,8 +19,9 @@ const Resources = () => {
               <Resource {...resource} key={index} />
             ))}
           </div>
-          <p className="ml-auto mt-8 text-[#787878] text-xl flex gap-2 items-center hover:underline">
-            Learn more <ArrowRight size={20} />
+          <p className="ml-auto mt-8 text-[#787878] hover:text-gray-800 text-lg md:text-xl flex gap-2 items-end transition-all cursor-pointer group relative">
+            Learn more <MoveRight size={20} />
+            <div className="hidden md:block absolute h-px md:h-[2px] w-full bottom-0 left-0 bg-swamp scale-x-0 group-hover:scale-x-100 transition ease-in-out duration-500"></div>
           </p>
         </div>
       </div>
@@ -32,15 +34,16 @@ const Resources = () => {
             Our resources span the following levels
           </span>
         </div>
-        <div className="flex flex-wrap justify-center gap-4 md:flex-row flex-col max-w-[80%] w-full">
+        <div className="flex flex-wrap justify-center gap-4 md:flex-row flex-col max-md:max-w-[80%] w-full">
           {[1, 2, 3, 4, 5].map((num) => (
-            <div
+            <Link
+              to="#"
               key={num}
-              className="bg-swamp/20 py-4 px-6 w-full md:min-w-[380px] rounded-md scale-100 hover:scale-101 transition font-medium text-center text-xl telative overflow-hidden"
+              className="bg-swamp/20 py-4 px-6 md:w-fit w-full md:min-w-[380px] rounded-md scale-100 hover:scale-101 transition font-medium text-center text-xl telative overflow-hidden"
             >
               {num * 100} Level
               <div className="absolute w-full h-[5px] bottom-0 left-0 bg-swamp"></div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -91,7 +94,7 @@ const Resource: React.FC<ResourceProps> = ({
   className = "",
 }) => (
   <div
-    className={`flex flex-col items-center gap-4 py-12 bg-[#E0E0E0]/80 rounded-3xl w-[365px] h-[304px] md:w-[662px] md:h-[552px]`}
+    className={`flex flex-col items-center justify-center gap-4 py-12 bg-[#E0E0E0]/80 rounded-3xl w-[365px] h-[304px] md:w-[662px] md:h-[552px]`}
   >
     <div className="relative w-full max-w-xs md:aspect-square flex flex-col items-center  ">
       <div className="bg-[#3e5e74] rounded-3xl w-fit">

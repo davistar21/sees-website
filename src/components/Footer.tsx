@@ -2,7 +2,7 @@ import { Twitter, Instagram, Linkedin, Twitch } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="bg-swamp text-gray-300">
+    <footer className="bg-swamp text-gray-300 mt-auto">
       <div className="w-full mx-auto grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-16 p-12">
         <div className="flex flex-col items-center md:items-start gap-2">
           <div className="w-[87px]">
