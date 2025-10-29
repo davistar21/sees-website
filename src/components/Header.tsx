@@ -1,15 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const [isScrolled, setIsScrolled] = useState(false);
+  // const location = useLocation();
   const toggleMenu = () => setMenuOpen((prev) => !prev);
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 200);
+    };
 
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   return (
     <div className="">
-      <header className="fixed top-0 left-0 right-0 z-50 shadow-md bg-transparent">
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all shadow-md ${
+          !isScrolled && !menuOpen
+            ? "bg-glass shadow-md backdrop-blur-xl"
+            : "bg-white"
+        }`}
+      >
         <div className="flex gap-4 items-center justify-between px-4 md:px-8">
           <div className="w-[87px] h-[87px] flex-shrink-0">
             <img
@@ -125,18 +139,19 @@ const headerLinks: LinkProp[] = [
 const HeaderLink: React.FC<LinkProp & { mobile?: boolean }> = ({
   name,
   href,
-  mobile,
 }) => {
+  const onPage = location.pathname === href;
   return (
     <a
       href={href}
-      className={`text-lg md:text-[20px] font-medium transition-colors
-        ${
-          mobile
-            ? "text-swamp hover:text-[#02543d]"
-            : "text-gray-800 hover:text-swamp"
-        }`}
+      className={`text-lg md:text-[20px] font-medium transition-colors text-swamp hover:text-green-600 relative
+        
+      
+`}
     >
+      {onPage && (
+        <div className="absolute w-full h-[2px] bg-swamp bottom-0 left-0"></div>
+      )}
       {name}
     </a>
   );

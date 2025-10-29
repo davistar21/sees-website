@@ -1,6 +1,5 @@
 import { easeInOut, motion } from "framer-motion";
 import { Link2, PhoneForwarded } from "lucide-react";
-import CardSwap, { Card } from "../components/CardSwap";
 type Member = {
   name: string;
   role: string;
@@ -14,20 +13,39 @@ type TeamSectionProps = {
   members: Member[];
 };
 
-// const fadeUp = {
-//   hidden: { opacity: 0, y: 40 },
-//   visible: (i: number) => ({
-//     opacity: 1,
-//     y: 0,
-//     transition: { delay: i * 0.2, duration: 0.6, ease: "easeOut" },
-//   }),
-// };
-const TopSection = () => {
+const Carousel = () => {
   const membersImages = [...developers, ...designers].flatMap((e) => e.image);
+  membersImages.push("contentone.jpg");
+  // const currentIndex = Math.ceil(membersImages.length / 2);
+  // const calculateTransform = (index: number) => {
+  //   const offset = index - currentIndex; // negative = left, positive = right
+  //   const rotateY = offset * -10; // adjust this for curvature intensity
+  //   const translateZ = -Math.abs(offset) * 0; // push side images back a bit
+  //   const translateX = offset * 60; // space them apart horizontally
+
+  //   return `
+  //   rotateY(${rotateY}deg)
+  //   translateZ(${translateZ}px)
+  // `;
+  // };
   return (
-    <div className="flex flex-col md:flex-row justify-between items-center pt-20 pb-40 px-20 mb-8 relative ">
+    <div className="flex gap-2 w-auto overflow-x-auto scrollbar snap-x snap-mandatory">
+      {membersImages.map((image, idx) => (
+        <img
+          src={image}
+          alt={`carousel-image-${idx}`}
+          className="w-[250px] h-auto object-cover aspect-square rounded-2xl snap-center"
+        />
+      ))}
+    </div>
+  );
+};
+
+const TopSection = () => {
+  return (
+    <div className="flex flex-col justify-between items-center md:pt-20 pb-40 px-6 md:px-16 mb-8 relative gap-8">
       <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-transparent to-white/30 z-10"></div>
-      <div className="flex flex-col gap-1 items-center md:items-start text-center md:text-left">
+      <div className="flex flex-col gap-1 items-center  text-center ">
         <h1 className="text-3xl md:text-5xl font-bold text-swamp mb-4">
           Meet the Team <br />{" "}
           <span className="text-gray-700">Visionaries</span>
@@ -38,29 +56,12 @@ const TopSection = () => {
         </p>
         <a
           href="/contact"
-          className="inline-block bg-swamp text-white font-semibold py-3 px-8 rounded-full hover:bg-[#02543d] transition-all"
+          className="inline-block bg-swamp text-white font-semibold py-3 px-8 rounded-2xl hover:bg-[#02543d] transition-all"
         >
           Contact Us
         </a>
       </div>
-
-      <div
-        style={{ height: "600px", position: "relative" }}
-        className="hidden md:block"
-      >
-        <CardSwap
-          cardDistance={60}
-          verticalDistance={70}
-          delay={5000}
-          pauseOnHover={false}
-        >
-          {membersImages.map((img, idx) => (
-            <Card key={idx} className="overflow-hidden">
-              <img src={img} alt="" className="object-cover w-full h-full" />
-            </Card>
-          ))}
-        </CardSwap>
-      </div>
+      <Carousel />
     </div>
   );
 };
@@ -77,9 +78,9 @@ const TeamMemberCard = ({
     transition={{ duration: 0.5, ease: easeInOut }}
     viewport={{ once: true, amount: 0.3 }}
     custom={index}
-    className="flex flex-col md:flex-row items-center  md:items-start gap-6 bg-white rounded-xl shadow-md p-6 md:p-8 h-auto"
+    className="flex flex-col md:flex-row items-center  gap-8 md:gap-20 rounded-xl h-auto"
   >
-    <div className="w-full aspect-[4/3] md:aspect-[11/13] md:w-[395px] -[467px] flex-shrink-0 overflow-hidden rounded-2xl">
+    <div className="w-full aspect-[4/3] md:aspect-[11/13] md:w-[395px]  flex-shrink-0 overflow-hidden rounded-2xl">
       <img
         src={member.image}
         alt={member.name}
@@ -89,21 +90,21 @@ const TeamMemberCard = ({
       />
     </div>
 
-    <div className="flex-1 text-center md:text-left flex flex-col gap-px h-auto">
-      <h3 className="text-[22px] font-semibold text-swamp">{member.name}</h3>
-      <p className="text-gray-500 font-medium mb-3">{member.role}</p>
-      <p className="text-gray-700 mb-6">{member.description}</p>
-      <div className="flex gap-4 mt-auto">
+    <div className="flex-1 text-center md:text-left flex flex-col gap-px h-full min-h-[380px]">
+      <h3 className="text-[36px] font-semibold text-swamp">{member.name}</h3>
+      <p className="text-gray-500 font-medium mb-3 text-base">{member.role}</p>
+      <p className="text-gray-700 mb-6 text-xl">{member.description}</p>
+      <div className="flex gap-4 mt-4 md:mt-auto justify-around md:justify-start">
         <a
           href={member.portfolio}
-          className="border border-swamp text-swamp font-semibold px-6 py-2 rounded-2xl hover:bg-swamp hover:text-white transition-all duration-300 flex gap-2 items-center"
+          className="border border-swamp text-white font-semibold px-6 py-2 rounded-2xl bg-swamp hover:text-green-200 transition-all duration-300 flex gap-2 items-center"
         >
           <Link2 size={20} />
           Portfolio
         </a>
         <a
           href=""
-          className="bg-swamp text-white font-semibold py-3 px-8 rounded-2xl hover:bg-[#02543d] transition-all"
+          className="border-2 border-swamp text-swamp font-semibold py-3 px-8 rounded-2xl hover:text-green-500 transition-all"
         >
           <PhoneForwarded size={20} />
         </a>
@@ -113,18 +114,18 @@ const TeamMemberCard = ({
 );
 
 const TeamSection = ({ title, members }: TeamSectionProps) => (
-  <section className="w-full max-w-5xl mx-auto my-16 px-4">
+  <section className="w-full max-w-7xl mx-auto my-24 px-4">
     <motion.h2
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="inline-block bg-[#eaf4f1] text-swamp font-semibold py-2 px-4 rounded-md mb-8"
+      className="inline-block bg-[#36CE8A26] text-swamp font-semibold py-4 px-8 rounded-[10px] mb-8 text-xl"
     >
       {title}
     </motion.h2>
 
-    <div className="flex flex-col gap-10">
+    <div className="flex flex-col gap-16">
       {members.map((member, i) => (
         <TeamMemberCard member={member} key={i} index={i} />
       ))}
@@ -145,7 +146,7 @@ const designers: Member[] = [
     role: "Graphic Designer",
     description:
       "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers who can solve the world’s most pressing technological challenges.",
-    image: "accbb9e05cf6d78eb3f26efadad987d1f381c0fa.png",
+    image: "contentone.jpg",
     portfolio: "#",
   },
 ];
@@ -156,7 +157,7 @@ const developers: Member[] = [
     role: "Frontend Developer",
     description:
       "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers who can solve the world’s most pressing technological challenges.",
-    image: "7bc5fa1064063587abd4ef80bff7028f79232637.jpg",
+    image: "contenttwo.jpg",
     portfolio: "#",
   },
   {
@@ -164,14 +165,14 @@ const developers: Member[] = [
     role: "Backend Developer",
     description:
       "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers who can solve the world’s most pressing technological challenges.",
-    image: "a8d4886f6c041a3ceadada56d3e0274a3d98294d.jpg",
+    image: "hod.png",
     portfolio: "#",
   },
 ];
 
 export default function Teams() {
   return (
-    <main className="bg-gray-50 min-h-screen mt-20 md:mt-0">
+    <main className="bg-gray-50 min-h-screen mt-20 md:mt-0 py-20">
       <TopSection />
 
       <TeamSection title="Meet The Designers" members={designers} />

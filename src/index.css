@@ -13,7 +13,6 @@ body {
 }
 @custom-variant dark (&:is(.dark *));
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -63,6 +62,6 @@ a {
   src: url(./assets/fonts/Manrope-VariableFont_wght.ttf);
 }
 
-*{
-  font-family: 'manrope', sans-serif;
+* {
+  font-family: "manrope", sans-serif;
 }

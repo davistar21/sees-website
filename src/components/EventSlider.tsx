@@ -10,27 +10,11 @@ import React, { useCallback } from "react";
 export const images = [
   {
     title: "Unilever Student Addressing",
-    url: "7bc5fa1064063587abd4ef80bff7028f79232637.jpg",
+    url: "hod.png",
   },
   {
     title: "Estrange Bond",
-    url: "0e78c84ac53a0fd0c22a5be4ea64aeacb99e4c5e.png",
-  },
-  {
-    title: "The Gate Keeper",
-    url: "4ff3a2916703a7346a95952066d9851017f09dd1.png",
-  },
-  {
-    title: "Last Trace Of Us",
-    url: "a8d4886f6c041a3ceadada56d3e0274a3d98294d.jpg",
-  },
-  {
-    title: "Estrange Bond",
-    url: "0e78c84ac53a0fd0c22a5be4ea64aeacb99e4c5e.png",
-  },
-  {
-    title: "Estrange Bond",
-    url: "accbb9e05cf6d78eb3f26efadad987d1f381c0fa.png",
+    url: "contentone.jpg",
   },
 ];
 
