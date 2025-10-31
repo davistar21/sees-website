@@ -21,7 +21,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 1;
 
 }
@@ -119,6 +119,7 @@
   flex-grow: 0;
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
 }
 
 .head-text{
@@ -739,6 +740,11 @@ color: #fff;
     width : 90%;
   }
 
+  .about-statement{
+    text-align: center;
+    width: 80%;
+  }
+
   .form-container{
     width : 90vw;
   }
@@ -759,5 +765,41 @@ color: #fff;
  @media all and (max-width: 534px){
     .subscribe{
       font-size : 20px;
+    }
+ }
+
+ @media all and (max-width:385px){
+  .short-text{
+    height: 120px;
+    margin: 1.2rem 0;
+  }
+
+  .content-card{
+    height: 660px;
+  }
+
+  .min-h-screen{
+    padding-top: 4rem;
+  }
+
+  .left-contact{
+    margin-top: 6rem;
+  }
+ }
+
+ @media all and (max-width:500px){
+    .newsletter{
+      width:100vw;
+    }
+
+    .form-container{
+      margin: 0 1.2rem;
+    }
+ }
+
+ @media all and (orientation : portrait){
+    .text-container{
+      gap: 0;
+      left: 5%;
     }
  }
