@@ -139,19 +139,30 @@ const headerLinks: LinkProp[] = [
 const HeaderLink: React.FC<LinkProp & { mobile?: boolean }> = ({
   name,
   href,
+  mobile,
 }) => {
   const onPage = location.pathname === href;
+  const onMainPage = location.pathname === "/";
   return (
     <a
       href={href}
-      className={`text-lg md:text-[20px] font-medium transition-colors text-swamp hover:text-green-600 relative
-        
-      
-`}
+      className={`group text-lg md:text-[20px] font-medium transition-colors  hover:text-green-600 relative ${
+        !mobile && onMainPage ? "text-white" : "text-swamp"
+      }`}
     >
-      {onPage && (
-        <div className="absolute w-full h-[2px] bg-swamp bottom-0 left-0"></div>
-      )}
+      <AnimatePresence>
+        {onPage && (
+          <motion.div
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            exit={{ scaleX: 0 }}
+            transition={{ duration: 0.8 }}
+            className={`group-hover:bg-green-600 transition-colors absolute w-full h-[2px] rounded-full bottom-0 left-0 ${
+              !mobile && onMainPage ? "bg-white" : "bg-swamp"
+            }`}
+          ></motion.div>
+        )}
+      </AnimatePresence>
       {name}
     </a>
   );
