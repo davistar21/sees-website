@@ -1,6 +1,6 @@
 import { easeInOut, motion } from "framer-motion";
 import { Link2, PhoneForwarded } from "lucide-react";
-type Member = {
+export type Member = {
   name: string;
   role: string;
   description: string;
@@ -13,7 +13,7 @@ type TeamSectionProps = {
   members: Member[];
 };
 
-const Carousel = () => {
+export const Carousel = () => {
   const membersImages = [...developers, ...designers].flatMap((e) => e.image);
   membersImages.push("contentone.jpg");
   // const currentIndex = Math.ceil(membersImages.length / 2);
@@ -113,7 +113,7 @@ const TeamMemberCard = ({
   </motion.div>
 );
 
-const TeamSection = ({ title, members }: TeamSectionProps) => (
+export const TeamSection = ({ title, members }: TeamSectionProps) => (
   <section className="w-full max-w-7xl mx-auto my-24 px-4">
     <motion.h2
       initial={{ opacity: 0, y: 20 }}
