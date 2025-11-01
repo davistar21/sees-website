@@ -6,6 +6,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   // const location = useLocation();
+  const onMainPage = location.pathname === "/";
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   useEffect(() => {
     const handleScroll = () => {
@@ -46,7 +47,11 @@ const Header = () => {
           <button
             onClick={toggleMenu}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="md:hidden flex items-center justify-center p-2 rounded-md hover:bg-gray-100 transition"
+            className={`md:hidden flex items-center justify-center p-2 rounded-md  transition  ${
+              !isScrolled && onMainPage
+                ? "text-white hover:bg-swamp"
+                : "text-swamp hover:bg-gray-100"
+            }`}
           >
             <motion.div
               initial={false}
@@ -54,9 +59,9 @@ const Header = () => {
               transition={{ duration: 0.3 }}
             >
               {menuOpen ? (
-                <X size={28} className="text-swamp" />
+                <X size={28} className="" />
               ) : (
-                <Menu size={28} className="text-swamp" />
+                <Menu size={28} className="" />
               )}
             </motion.div>
           </button>
@@ -136,18 +141,25 @@ const headerLinks: LinkProp[] = [
   { name: "Resources", href: "/resources" },
 ];
 
-const HeaderLink: React.FC<LinkProp & { mobile?: boolean }> = ({
-  name,
-  href,
-  mobile,
-}) => {
+const HeaderLink: React.FC<
+  LinkProp & { mobile?: boolean; isScrolled?: boolean }
+> = ({ name, href, mobile }) => {
+  const [isScrolled, setIsScrolled] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 200);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
   const onPage = location.pathname === href;
   const onMainPage = location.pathname === "/";
   return (
     <a
       href={href}
       className={`group text-lg md:text-[20px] font-medium transition-colors  hover:text-green-600 relative ${
-        !mobile && onMainPage ? "text-white" : "text-swamp"
+        !mobile && onMainPage && !isScrolled ? "text-white" : "text-swamp"
       }`}
     >
       <AnimatePresence>
@@ -158,7 +170,7 @@ const HeaderLink: React.FC<LinkProp & { mobile?: boolean }> = ({
             exit={{ scaleX: 0 }}
             transition={{ duration: 0.8 }}
             className={`group-hover:bg-green-600 transition-colors absolute w-full h-[2px] rounded-full bottom-0 left-0 ${
-              !mobile && onMainPage ? "bg-white" : "bg-swamp"
+              !mobile && onMainPage && !isScrolled ? "bg-white" : "bg-swamp"
             }`}
           ></motion.div>
         )}
