@@ -14,15 +14,15 @@ const Resources = () => {
           </span>
         </div>
         <div className="flex flex-col gap-4">
-          <div className="grid lg:grid-cols-2 grid-cols-1 gap-8 md:w-fit w-full">
+          <div className="grid xl:grid-cols-2 grid-cols-1 gap-8 md:w-fit w-full">
             {resources.map((resource, index) => (
               <Resource {...resource} key={index} />
             ))}
           </div>
-          <p className="ml-auto mt-8 text-[#787878] hover:text-gray-800 text-lg md:text-xl flex gap-2 items-end transition-all cursor-pointer group relative">
+          <div className="ml-auto mt-8 text-[#787878] hover:text-gray-800 text-lg md:text-xl flex gap-2 items-end transition-all cursor-pointer group relative">
             Learn more <MoveRight size={20} />
             <div className="hidden md:block absolute h-px md:h-[2px] w-full bottom-0 left-0 bg-swamp scale-x-0 group-hover:scale-x-100 transition ease-in-out duration-500"></div>
-          </p>
+          </div>
         </div>
       </div>
       <div className="flex flex-col gap-4 items-center">
