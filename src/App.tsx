@@ -69,8 +69,7 @@ useEffect(() => {
 
   transition();
   const interval = setInterval(transition, 5000)
-  return () => clearInterval(interval)
-}, [])
+  return () => clearInterval(interval)}, [])
 
   return (
     <div className="all-contents">
