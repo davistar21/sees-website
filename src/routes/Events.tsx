@@ -1,50 +1,213 @@
-import { images } from "../components/EventSlider";
+import { useEffect, useState } from "react";
+import {
+  ArrowUpRight,
+  CalendarDays,
+  Clock,
+  MapPin,
+  Play,
+  X,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { supabase, type DBEvent, type GalleryImage } from "../lib/supabase";
+import ImageSlider from "../components/ImageSlider";
 
-interface EventHighlightProps {
-  imageSrc: string;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const extractYouTubeId = (url: string): string | null => {
+  const patterns = [
+    /[?&]v=([^&#]+)/,
+    /youtu\.be\/([^?&#]+)/,
+    /\/embed\/([^?&#]+)/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+};
+
+const formatDate = (date: string | null): string => {
+  if (!date) return "";
+  return new Date(date).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+// ---------------------------------------------------------------------------
+// Gallery Lightbox
+// ---------------------------------------------------------------------------
+
+interface LightboxProps {
+  images: GalleryImage[];
+  initialIndex: number;
+  onClose: () => void;
 }
 
-const EventHighlight: React.FC<EventHighlightProps> = ({ imageSrc }) => (
-  <img
-    src={imageSrc}
-    alt="Event Highlight"
-    className="w-14 h-14 md:w-25 md:h-25 object-cover rounded-md"
-  />
-);
+const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
+  const [idx, setIdx] = useState(initialIndex);
+
+  const prev = () => setIdx((i) => (i === 0 ? images.length - 1 : i - 1));
+  const next = () => setIdx((i) => (i === images.length - 1 ? 0 : i + 1));
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center p-4"
+      onClick={onClose}
+    >
+      {/* Close */}
+      <button
+        className="absolute top-4 right-4 text-white/70 hover:text-white transition-colors"
+        onClick={onClose}
+      >
+        <X size={28} />
+      </button>
+
+      {/* Counter */}
+      <p className="absolute top-4 left-1/2 -translate-x-1/2 text-white/60 text-sm">
+        {idx + 1} / {images.length}
+      </p>
+
+      {/* Image */}
+      <div
+        className="relative max-w-4xl w-full max-h-[75vh] flex items-center justify-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <img
+          src={images[idx].url}
+          alt={images[idx].description}
+          className="max-h-[70vh] max-w-full object-contain rounded-xl"
+        />
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition-colors"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Caption */}
+      {images[idx].description && (
+        <p className="mt-4 text-white/80 text-sm text-center max-w-xl">
+          {images[idx].description}
+        </p>
+      )}
+
+      {/* Thumbnail strip */}
+      {images.length > 1 && (
+        <div className="flex gap-2 mt-4" onClick={(e) => e.stopPropagation()}>
+          {images.map((img, i) => (
+            <img
+              key={i}
+              src={img.url}
+              alt=""
+              onClick={() => setIdx(i)}
+              className={`w-12 h-12 object-cover rounded-lg cursor-pointer border-2 transition-all ${
+                i === idx ? "border-[#95fde2]" : "border-transparent opacity-60 hover:opacity-100"
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Sub-components
+// ---------------------------------------------------------------------------
 
 interface EventCardProps {
-  title: string;
-  imageSrc: string;
-  location: string;
-  time: string;
+  event: DBEvent;
+  onViewHighlights: (event: DBEvent) => void;
 }
 
-const EventCard: React.FC<EventCardProps> = ({
-  title,
-  imageSrc,
-  location,
-  time,
-}) => (
-  <div className="shadow-sm w-auto min-h-[350px] md:h-[411px] md:w-[515px] relative overflow-hidden rounded-[20px] bg-black/40 flex flex-col px-4 py-2">
-    <img
-      src={imageSrc}
-      alt={title}
-      className="md:w-[515px] md:h-[411px] object-cover absolute inset-0 -z-2 aspect-square"
-    />
-    <div className="p-4 text-white flex flex-col mt-auto items-start">
-      <h3 className="text-xl md:text-[24px] font-semibold">{title}</h3>
-      <div className="text-sm mt-2 flex gap-8 items-center">
-        <p className="flex gap-1 items-center">
-          <MapPin size={16} />
-          {location}
-        </p>
-        <p className="flex gap-1 items-center">
-          <Clock size={16} /> {time}
-        </p>
+const EventCard = ({ event, onViewHighlights }: EventCardProps) => {
+  const gallery = event.gallery_images ?? [];
+  return (
+    <div className="flex flex-col md:flex-row gap-4 md:gap-8 justify-center">
+      {/* Main image card */}
+      <div className="shadow-sm w-full md:w-[515px] min-h-[300px] md:h-[411px] relative overflow-hidden rounded-[20px] bg-black/40 flex flex-col px-4 py-2 flex-shrink-0">
+        {event.image_url && (
+          <img
+            src={event.image_url}
+            alt={event.title}
+            className="absolute inset-0 w-full h-full object-cover -z-10"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent -z-5" />
+        <div className="p-4 text-white flex flex-col mt-auto items-start">
+          <h3 className="text-xl md:text-[24px] font-semibold">{event.title}</h3>
+          <div className="text-sm mt-2 flex gap-6 items-center flex-wrap">
+            {event.location && (
+              <p className="flex gap-1 items-center">
+                <MapPin size={14} /> {event.location}
+              </p>
+            )}
+            {event.event_time && (
+              <p className="flex gap-1 items-center">
+                <Clock size={14} /> {event.event_time}
+              </p>
+            )}
+            {event.event_date && (
+              <p className="flex gap-1 items-center">
+                <CalendarDays size={14} /> {formatDate(event.event_date)}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Gallery strip */}
+      <div className="flex flex-col-reverse justify-between flex-wrap gap-4">
+        {gallery.length > 0 && (
+          <button
+            onClick={() => onViewHighlights(event)}
+            className="text-sm text-swamp font-medium cursor-pointer ml-auto md:ml-0 flex gap-[2px] items-center hover:text-swamp/60 transition-colors"
+          >
+            View full highlights <ArrowUpRight size={16} />
+          </button>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {gallery.map((img, h) => (
+            <img
+              key={h}
+              src={img.url}
+              alt={img.description || `Gallery ${h + 1}`}
+              className="w-14 h-14 md:w-20 md:h-20 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => onViewHighlights(event)}
+            />
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 interface EventTabsProps {
   tabs: string[];
@@ -52,11 +215,7 @@ interface EventTabsProps {
   onTabClick: (tab: string) => void;
 }
 
-const EventTabs: React.FC<EventTabsProps> = ({
-  tabs,
-  activeTab,
-  onTabClick,
-}) => (
+const EventTabs = ({ tabs, activeTab, onTabClick }: EventTabsProps) => (
   <div className="flex gap-4 bg-[#E0E0E087] p-2 md:px-6 md:py-4 w-full md:w-fit mx-auto my-12 rounded-xl">
     {tabs.map((tab) => (
       <button
@@ -71,90 +230,177 @@ const EventTabs: React.FC<EventTabsProps> = ({
     ))}
   </div>
 );
-import { ArrowUpRight, CalendarDays, Clock, MapPin, Play } from "lucide-react";
 
-import { useState } from "react";
-import ImageSlider from "../components/ImageSlider";
+// ---------------------------------------------------------------------------
+// Main component
+// ---------------------------------------------------------------------------
+
+const fallbackEvents: DBEvent[] = [
+  {
+    id: "1",
+    title: "SEES Annual Summit",
+    description: null,
+    image_url: "/contentone.jpg",
+    location: "Main Auditorium",
+    event_time: "10:00",
+    event_date: "2025-09-27",
+    category: "Corporate events",
+    is_featured: false,
+    youtube_url: null,
+    gallery_images: [],
+    created_at: "",
+  },
+  {
+    id: "2",
+    title: "SEES Sports Tournament",
+    description: null,
+    image_url: "/contenttwo.jpg",
+    location: "Sports Complex",
+    event_time: "12:00",
+    event_date: "2025-10-15",
+    category: "Sport events",
+    is_featured: false,
+    youtube_url: null,
+    gallery_images: [],
+    created_at: "",
+  },
+];
 
 const Events = () => {
+  const [events, setEvents] = useState<DBEvent[]>([]);
   const [activeTab, setActiveTab] = useState("Corporate events");
+  const [lightboxEvent, setLightboxEvent] = useState<DBEvent | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const tabs = ["Corporate events", "Sport events", "Fun events"];
 
+  useEffect(() => {
+    supabase
+      .from("events")
+      .select("*")
+      .order("event_date", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) setEvents(data);
+        else setEvents(fallbackEvents);
+      });
+  }, []);
+
+  const displayEvents = events.length > 0 ? events : fallbackEvents;
+
+  // Slider: all event main images
+  const sliderImages = displayEvents
+    .filter((e) => e.image_url)
+    .map((e) => e.image_url as string);
+
+  // Featured video: first event with a youtube_url
+  const featuredVideo = displayEvents.find(
+    (e) => e.youtube_url && e.youtube_url.trim() !== ""
+  ) ?? null;
+
+  // Tab-filtered events
+  const filteredEvents = displayEvents.filter((e) => e.category === activeTab);
+
+  const openLightbox = (event: DBEvent, index = 0) => {
+    setLightboxEvent(event);
+    setLightboxIndex(index);
+  };
+
   return (
     <div className="mx-auto w-full pb-8">
-      <div className="overflow-y-auto md:h-screen scrollbar">
-        <div className="relative w-full  overflow-hidden h-screen flex flex-col items-center justify-center ">
-          <ImageSlider
-            images={images.map((_) => _.url)}
-            className="!absolute -z-2"
-          />
-          <div className="absolute inset-0 bg-white/50 bg-opacity-50 p-6 flex flex-col justify-end -z-1"></div>
-          <div className="flex flex-col items-center gap-4 text-center">
-            <h1 className="text-[64px] font-semibold">All Events</h1>
-            <span className="text-[24px] font-semibold">
-              View catchy and exciting stories from past and upcoming events
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="lg:w-[80%] md:w-[90%] w-[95%] rounded-2xl h-[50vh] md:h-screen flex my-16  mx-auto overflow-hidden relative">
-        <div className="flex flex-col gap-2 text-white mt-auto p-6 md:p-12 w-full">
-          <h2 className="text-2xl md:text-3xl font-semibold">
-            Unilever student addressing
-          </h2>
-          <div className="flex gap-4 md:gap-6 md:items-center justify-between items-start text-gray-200 text-sm md:text-base">
-            <div className="flex md:flex-row flex-col gap-2 md:gap-6">
-              <span className="flex gap-1 items-center">
-                <MapPin size={16} /> Sports Complex
-              </span>
-              <span className="flex gap-1 items-center">
-                <Clock size={16} /> 10:00AM
-              </span>
-            </div>
-            <span className="flex gap-1 items-center">
-              <CalendarDays size={16} /> 27th Sept. 2025
-            </span>
-          </div>
-        </div>
-        <img
-          src="contentone.jpg"
-          alt=""
-          className="absolute -z-2 inset-0 aspect-[16/9] object-cover w-full h-full"
+      {/* Hero slider */}
+      <div className="relative w-full overflow-hidden h-screen flex flex-col items-center justify-center">
+        <ImageSlider
+          images={sliderImages.length > 0 ? sliderImages : ["/contentone.jpg"]}
+          className="!absolute -z-10"
         />
-        <div className="absolute inset-0 -z-1 bg-black/40 flex items-center justify-center">
-          <Play className="fill-current text-white" size={40} />
+        <div className="absolute inset-0 bg-black/40 -z-5" />
+        <div className="flex flex-col items-center gap-4 text-center z-10 px-4">
+          <h1 className="text-5xl md:text-[64px] font-semibold text-white">All Events</h1>
+          <span className="text-lg md:text-[24px] font-semibold text-white/90">
+            View catchy and exciting stories from past and upcoming events
+          </span>
         </div>
       </div>
 
+      {/* Featured video section */}
+      {featuredVideo && (
+        <div className="lg:w-[80%] md:w-[90%] w-[95%] rounded-2xl overflow-hidden my-16 mx-auto">
+          <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
+            {extractYouTubeId(featuredVideo.youtube_url!) ? (
+              <iframe
+                className="absolute inset-0 w-full h-full rounded-2xl"
+                src={`https://www.youtube.com/embed/${extractYouTubeId(featuredVideo.youtube_url!)}?rel=0`}
+                title={featuredVideo.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              /* Fallback: thumbnail with play button */
+              <div className="absolute inset-0 rounded-2xl overflow-hidden">
+                {featuredVideo.image_url && (
+                  <img
+                    src={featuredVideo.image_url}
+                    alt={featuredVideo.title}
+                    className="w-full h-full object-cover"
+                  />
+                )}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <Play className="fill-current text-white" size={56} />
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="bg-[#013f31] rounded-b-2xl px-6 py-4 text-white">
+            <h2 className="text-xl md:text-2xl font-semibold">{featuredVideo.title}</h2>
+            <div className="flex gap-4 md:gap-6 flex-wrap text-[#95fde2] text-sm mt-2">
+              {featuredVideo.location && (
+                <span className="flex gap-1 items-center">
+                  <MapPin size={14} /> {featuredVideo.location}
+                </span>
+              )}
+              {featuredVideo.event_time && (
+                <span className="flex gap-1 items-center">
+                  <Clock size={14} /> {featuredVideo.event_time}
+                </span>
+              )}
+              {featuredVideo.event_date && (
+                <span className="flex gap-1 items-center">
+                  <CalendarDays size={14} /> {formatDate(featuredVideo.event_date)}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Category tabs */}
       <EventTabs tabs={tabs} activeTab={activeTab} onTabClick={setActiveTab} />
 
-      <div className="flex flex-col gap-12 max-w-7xl px-8  mx-auto">
-        {[1, 2, 3].map((_, i) => (
-          <div
-            key={i}
-            className="flex flex-col md:flex-row gap-4 md:gap-8 justify-center"
-          >
+      {/* Event cards */}
+      <div className="flex flex-col gap-12 max-w-7xl px-4 md:px-8 mx-auto">
+        {filteredEvents.length === 0 ? (
+          <p className="text-center text-gray-400 py-12">
+            No events in this category yet.
+          </p>
+        ) : (
+          filteredEvents.map((event) => (
             <EventCard
-              title="SEES Sports Tournament"
-              imageSrc="contentone.jpg"
-              location="Sport Complex"
-              time="12:00 am"
+              key={event.id}
+              event={event}
+              onViewHighlights={(e) => openLightbox(e, 0)}
             />
-            <div className="flex flex-col-reverse  justify-between flex-wrap gap-4">
-              <p className="text-sm md:text-base text-swamp font-medium cursor-pointer ml-auto md:ml-0 flex gap-[2px] items-center hover:text-swamp/60 transition-colors">
-                View full highlights <ArrowUpRight size={16} />
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((h) => (
-                  <EventHighlight key={h} imageSrc="contentone.jpg" />
-                ))}
-              </div>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
+
+      {/* Lightbox */}
+      {lightboxEvent && (lightboxEvent.gallery_images ?? []).length > 0 && (
+        <Lightbox
+          images={lightboxEvent.gallery_images!}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxEvent(null)}
+        />
+      )}
     </div>
   );
 };

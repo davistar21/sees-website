@@ -1,157 +1,254 @@
 import { useEffect, useState } from "react";
-import { MoveRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase, type Resource } from "../lib/supabase";
+import { ExternalLink, ChevronRight, BookOpen, YoutubeIcon, Play, Book } from "lucide-react";
 
-const iconMap: Record<Resource["type"], string> = {
-  lesson_notes: "/book-icon.png",
-  youtube: "/logos_youtube-icon.png",
-  tutorial: "/video-icon.png",
-  textbook: "/textbk-icon.png",
-};
+// ─── Brand palette ────────────────────────────────────────────
+// #013f31 deep forest green  |  #95fde2 mint green
+// #e8fff7 off-white mint     |  #ffb703 amber
+// #ffffff white              |  #0f0f0f near black
 
-const baseImageMap: Record<Resource["type"], string> = {
-  lesson_notes: "/0e285ca1840408695f54ab571e2874db961425de.jpg",
-  youtube: "/055b92ccf143379da169a3404fe022d1dcd52614.png",
-  tutorial: "/ca54ef4c59cb366fb4121db986628968c0ccf6e2.png",
-  textbook: "/8386c1fdb2705750a10050f8b7bbcfda0ebadf92.png",
-};
+const TYPES: Resource["type"][] = ["lesson_notes", "youtube", "tutorial", "textbook"];
 
-const bgMap: Record<Resource["type"], string> = {
-  lesson_notes: "bg-[#e2ffe7] rotate-[12.84deg]",
-  youtube: "bg-[#ffdede] -rotate-[13.84deg]",
-  tutorial: "bg-[#e0e0ff] -rotate-[13.84deg]",
-  textbook: "bg-[#fbf4d4] rotate-[12.84deg]",
-};
-
-const titleMap: Record<Resource["type"], string> = {
+const typeLabel: Record<Resource["type"], string> = {
   lesson_notes: "Lesson Notes",
   youtube: "YouTube Links",
   tutorial: "Tutorial Videos",
   textbook: "Textbooks",
 };
 
-// Deduplicated resource type cards — one card per type
-type ResourceCardProps = {
-  type: Resource["type"];
-  url?: string | null;
+const typeIcon: Record<Resource["type"], React.ElementType> = {
+  lesson_notes: BookOpen,
+  youtube: YoutubeIcon,
+  tutorial: Play,
+  textbook: Book,
 };
 
-const ResourceCard: React.FC<ResourceCardProps> = ({ type, url }) => (
-  <a
-    href={url ?? "#"}
-    target={url ? "_blank" : undefined}
-    rel="noreferrer"
-    className={`flex flex-col items-center justify-center gap-4 py-12 bg-[#E0E0E0]/80 rounded-3xl w-[365px] h-[304px] md:w-[662px] md:h-[552px] hover:opacity-90 transition-opacity`}
-  >
-    <div className="relative w-full max-w-xs md:aspect-square flex flex-col items-center">
-      <div className="bg-[#3e5e74] rounded-3xl w-fit">
-        <img
-          src={baseImageMap[type]}
-          alt={titleMap[type]}
-          className="w-[150px] h-[147px] md:w-[272px] md:h-[266px] object-cover rounded-3xl"
-        />
-      </div>
-      <div
-        className={`absolute bottom-1/2 right-12 md:bottom-6 md:-right-8 w-[92px] h-[90px] md:w-[167px] md:h-[164px] rounded-lg shadow-2xl flex items-center justify-center ${bgMap[type]}`}
-      >
-        <img
-          src={iconMap[type]}
-          alt={`${titleMap[type]} icon`}
-          className="w-[53px] h-[58px] object-contain"
-        />
-      </div>
-    </div>
-    <p className="text-gray-900 font-[700] text-center text-[22px] md:text-[38px]">
-      {titleMap[type]}
-    </p>
-  </a>
-);
+// Inactive chip: mint tint bg + swamp text
+const typeBg: Record<Resource["type"], string> = {
+  lesson_notes: "bg-[#e8fff7] text-[#013f31]",
+  youtube:      "bg-[#fff8e1] text-[#b47e00]",
+  tutorial:     "bg-[#e8fff7] text-[#013f31]",
+  textbook:     "bg-[#fff8e1] text-[#b47e00]",
+};
 
-const levels = [100, 200, 300, 400, 500];
+const LEVELS = [100, 200, 300, 400, 500];
+
+// ─── Resource item ────────────────────────────────────────────
+
+const ResourceItem = ({ resource }: { resource: Resource }) => {
+  const Icon = typeIcon[resource.type];
+  return (
+    <a
+      href={resource.url ?? "#"}
+      target={resource.url ? "_blank" : undefined}
+      rel="noreferrer"
+      className={`flex items-center gap-3 p-3 rounded-xl border border-[#95fde2]/40 hover:border-[#95fde2] hover:bg-[#e8fff7] transition-all group ${
+        !resource.url ? "opacity-50 pointer-events-none" : ""
+      }`}
+    >
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${typeBg[resource.type]}`}>
+        <Icon size={15} />
+      </div>
+      <span className="flex-1 text-sm font-medium text-[#0f0f0f] group-hover:text-[#013f31] transition-colors truncate">
+        {resource.title}
+      </span>
+      {resource.url && (
+        <ExternalLink size={14} className="text-[#95fde2] group-hover:text-[#013f31] flex-shrink-0" />
+      )}
+    </a>
+  );
+};
+
+// ─── Main page ────────────────────────────────────────────────
 
 const Resources = () => {
-  const [resourceTypes, setResourceTypes] = useState<
-    { type: Resource["type"]; url: string | null }[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeType = (searchParams.get("type") as Resource["type"]) ?? "lesson_notes";
 
-  // Fallback static types shown when DB is empty
-  const fallbackTypes: { type: Resource["type"]; url: null }[] = [
-    { type: "lesson_notes", url: null },
-    { type: "youtube", url: null },
-    { type: "tutorial", url: null },
-    { type: "textbook", url: null },
-  ];
+  const [generalResources, setGeneralResources] = useState<Resource[]>([]);
+  const [levelCounts, setLevelCounts] = useState<Record<number, number>>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     supabase
       .from("resources")
-      .select("type, url")
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          // One card per type, use the first url found for that type
-          const seen = new Map<Resource["type"], string | null>();
-          for (const r of data as Pick<Resource, "type" | "url">[]) {
-            if (!seen.has(r.type)) seen.set(r.type, r.url);
-          }
-          setResourceTypes(
-            Array.from(seen.entries()).map(([type, url]) => ({ type, url }))
-          );
-        } else {
-          setResourceTypes(fallbackTypes);
-        }
-        setLoading(false);
-      });
+      .select("*")
+      .is("level", null)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setGeneralResources(data ?? []));
+
+    Promise.all(
+      LEVELS.map((lvl) =>
+        supabase
+          .from("resources")
+          .select("id", { count: "exact", head: true })
+          .eq("level", lvl)
+          .then(({ count }) => ({ lvl, count: count ?? 0 }))
+      )
+    ).then((results) => {
+      const counts: Record<number, number> = {};
+      results.forEach(({ lvl, count }) => (counts[lvl] = count));
+      setLevelCounts(counts);
+      setLoading(false);
+    });
   }, []);
 
-  const displayed = loading ? fallbackTypes : resourceTypes;
+  const filtered = generalResources.filter((r) => r.type === activeType);
 
   return (
-    <div className="min-h-screen mt-20 p-4">
-      <div className="flex flex-col gap-4 items-center">
-        <div className="text-center mb-8">
-          <h1 className="md:text-[64px] font-semibold text-[35px]">
-            Our Resources
-          </h1>
-          <span className="text-base md:text-[24px]">
-            Our resources include various learning solutions
-          </span>
-        </div>
-        <div className="flex flex-col gap-4">
-          <div className="grid xl:grid-cols-2 grid-cols-1 gap-8 md:w-fit w-full">
-            {displayed.map((r) => (
-              <ResourceCard key={r.type} type={r.type} url={r.url} />
-            ))}
-          </div>
-          <div className="ml-auto mt-8 text-[#787878] hover:text-gray-800 text-lg md:text-xl flex gap-2 items-end transition-all cursor-pointer group relative">
-            Learn more <MoveRight size={20} />
-            <div className="hidden md:block absolute h-px md:h-[2px] w-full bottom-0 left-0 bg-swamp scale-x-0 group-hover:scale-x-100 transition ease-in-out duration-500"></div>
-          </div>
-        </div>
+    <div className="min-h-screen mt-20 pb-20" style={{ backgroundColor: "#ffffff" }}>
+
+      {/* ── Header ── */}
+      <div style={{ backgroundColor: "#013f31" }} className="py-16 px-6 text-center">
+        <h1 className="text-4xl md:text-6xl font-bold mb-3" style={{ color: "#95fde2" }}>
+          Our Resources
+        </h1>
+        <p className="text-lg max-w-xl mx-auto" style={{ color: "rgba(149,253,226,0.65)" }}>
+          Curated learning materials for every level of your journey
+        </p>
       </div>
 
-      <div className="flex flex-col gap-4 items-center">
-        <div className="text-center my-8">
-          <h1 className="md:text-[64px] font-semibold text-[35px]">
-            Our Levels
-          </h1>
-          <span className="text-base md:text-[24px]">
-            Our resources span the following levels
-          </span>
-        </div>
-        <div className="flex flex-wrap justify-center gap-4 md:flex-row flex-col max-md:max-w-[80%] w-full">
-          {levels.map((num) => (
-            <Link
-              to="#"
-              key={num}
-              className="bg-swamp/20 py-4 px-6 md:w-fit w-full md:min-w-[380px] rounded-md scale-100 hover:scale-101 transition font-medium text-center text-xl relative overflow-hidden"
-            >
-              {num} Level
-              <div className="absolute w-full h-[5px] bottom-0 left-0 bg-swamp"></div>
-            </Link>
-          ))}
-        </div>
+      <div className="max-w-6xl mx-auto px-6">
+
+        {/* ── General Resources ── */}
+        <section className="mt-14">
+          <div className="mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: "#0f0f0f" }}>
+              General Resources
+            </h2>
+            <p className="mt-1" style={{ color: "#787878" }}>
+              Available to all levels — pick a category to browse
+            </p>
+          </div>
+
+          {/* Type filter cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {TYPES.map((type) => {
+              const Icon = typeIcon[type];
+              const count = generalResources.filter((r) => r.type === type).length;
+              const isActive = activeType === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setSearchParams({ type })}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2 transition-all text-center"
+                  style={{
+                    backgroundColor: isActive ? "#013f31" : "#e8fff7",
+                    borderColor: isActive ? "#013f31" : "#95fde2",
+                    transform: isActive ? "scale(1.02)" : "scale(1)",
+                  }}
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center transition-colors"
+                    style={{ backgroundColor: isActive ? "#95fde2" : "#013f31" }}
+                  >
+                    <Icon size={22} style={{ color: isActive ? "#013f31" : "#95fde2" }} />
+                  </div>
+                  <div>
+                    <p
+                      className="font-semibold text-sm"
+                      style={{ color: isActive ? "#ffffff" : "#013f31" }}
+                    >
+                      {typeLabel[type]}
+                    </p>
+                    <p
+                      className="text-xs mt-0.5"
+                      style={{ color: isActive ? "rgba(149,253,226,0.75)" : "#787878" }}
+                    >
+                      {count} item{count !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Resource list */}
+          <div
+            className="rounded-2xl p-6 min-h-[200px] border"
+            style={{ backgroundColor: "#ffffff", borderColor: "#e0e0e0" }}
+          >
+            <div className="flex items-center gap-2 mb-5">
+              <div
+                className="w-7 h-7 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: "#013f31" }}
+              >
+                {(() => {
+                  const Icon = typeIcon[activeType];
+                  return <Icon size={14} style={{ color: "#95fde2" }} />;
+                })()}
+              </div>
+              <h3 className="font-semibold" style={{ color: "#0f0f0f" }}>
+                {typeLabel[activeType]}
+              </h3>
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-8">
+                <div
+                  className="w-6 h-6 border-2 rounded-full animate-spin"
+                  style={{ borderColor: "#013f31", borderTopColor: "transparent" }}
+                />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-10" style={{ color: "#787878" }}>
+                <p className="text-sm">No {typeLabel[activeType].toLowerCase()} added yet.</p>
+                <p className="text-xs mt-1">Admins can add them via the dashboard.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {filtered.map((r) => (
+                  <ResourceItem key={r.id} resource={r} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* ── Browse by Level ── */}
+        <section className="mt-16">
+          <div className="mb-6">
+            <h2 className="text-2xl md:text-3xl font-bold" style={{ color: "#0f0f0f" }}>
+              Browse by Level
+            </h2>
+            <p className="mt-1" style={{ color: "#787878" }}>
+              Resources tailored specifically for each academic level
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+            {LEVELS.map((level) => {
+              const count = levelCounts[level] ?? 0;
+              return (
+                <Link
+                  key={level}
+                  to={`/resources/${level}`}
+                  className="group flex flex-col justify-between p-6 rounded-2xl border-2 transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 hover:bg-[#013f31] hover:border-[#013f31]"
+                  style={{ backgroundColor: "#e8fff7", borderColor: "#95fde2" }}
+                >
+                  <div>
+                    <p className="text-3xl font-bold transition-colors duration-200 text-[#013f31] group-hover:text-[#95fde2]">
+                      {level}
+                    </p>
+                    <p className="text-sm font-medium mt-0.5 transition-colors duration-200 text-[#013f31] group-hover:text-[#95fde2]/80">
+                      Level
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between mt-6">
+                    <span className="text-xs font-medium transition-colors duration-200 text-[#013f31] group-hover:text-[#95fde2]/70">
+                      {count} resource{count !== 1 ? "s" : ""}
+                    </span>
+                    <ChevronRight
+                      size={18}
+                      className="transition-all duration-200 group-hover:translate-x-0.5 text-[#013f31] group-hover:text-[#95fde2]"
+                    />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
       </div>
     </div>
   );

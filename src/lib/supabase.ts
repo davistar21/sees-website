@@ -9,6 +9,11 @@ const supabaseAnonKey =
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+export type GalleryImage = {
+  url: string
+  description: string
+}
+
 export type DBEvent = {
   id: string
   title: string
@@ -19,6 +24,8 @@ export type DBEvent = {
   event_date: string | null
   category: string
   is_featured: boolean
+  youtube_url: string | null
+  gallery_images: GalleryImage[] | null
   created_at: string
 }
 
@@ -57,5 +64,15 @@ export type Announcement = {
   title: string
   content: string | null
   active: boolean
+  created_at: string
+}
+
+export type HodProfile = {
+  id: string
+  name: string
+  title: string | null
+  bio: string | null
+  image_url: string | null
+  contact_email: string | null
   created_at: string
 }

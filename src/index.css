@@ -7,9 +7,9 @@ body {
   margin: 0;
 }
 @utility bg-glass {
-  background: transparent;
-  backdrop-filter: blur(16px) brightness(1.2);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 @custom-variant dark (&:is(.dark *));
 :root {

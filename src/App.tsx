@@ -191,9 +191,9 @@ const App = () => {
       <Vision />
       <About />
 
-      <div className="all">
-        <div style={{ width: "100%" }}>
-          <div className="contentcard-container">
+      <div className="w-full bg-white py-12 px-4">
+        <div className="max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
             {displayPosts.map((post, i) => (
               <ContentCard
                 key={post.id || i}
@@ -206,10 +206,11 @@ const App = () => {
             ))}
           </div>
 
-          <div className="flex justify-center mt-8 pb-6">
+          <div className="flex justify-center mt-10">
             <Link
               to="/blog"
-              className="flex items-center gap-2 bg-swamp text-white py-3 px-8 rounded-2xl font-semibold hover:bg-[#02543d] transition-colors"
+              className="flex items-center gap-2 py-3 px-8 rounded-2xl font-semibold transition-opacity hover:opacity-80"
+              style={{ backgroundColor: "#013f31", color: "#95fde2" }}
             >
               View all posts <ArrowRight size={18} />
             </Link>

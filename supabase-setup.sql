@@ -13,9 +13,15 @@ create table if not exists events (
   event_time   text,
   event_date   text,
   category     text not null default 'Corporate events',
-  is_featured  boolean not null default false,
-  created_at   timestamptz not null default now()
+  is_featured     boolean not null default false,
+  youtube_url     text,
+  gallery_images  jsonb not null default '[]'::jsonb,
+  created_at      timestamptz not null default now()
 );
+
+-- Migration: add new columns to existing events table if upgrading
+alter table events add column if not exists youtube_url    text;
+alter table events add column if not exists gallery_images jsonb not null default '[]'::jsonb;
 
 -- Executives
 create table if not exists executives (
