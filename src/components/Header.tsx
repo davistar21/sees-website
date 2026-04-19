@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Header = () => {
@@ -40,8 +40,23 @@ const Header = () => {
             ))}
           </nav>
 
-          <div className="hidden md:flex bg-swamp text-white py-2 px-6 rounded-2xl text-[20px] font-semibold hover:bg-[#02543d] transition-colors cursor-pointer select-none">
-            <a href="/contact">Contact Us</a>
+          <div className="hidden md:flex items-center gap-3">
+            <a
+              href="/admin/login"
+              className={`flex items-center gap-2 py-2 px-4 rounded-2xl text-[18px] font-semibold border transition-colors ${
+                !isScrolled && onMainPage
+                  ? "border-white/50 text-white hover:bg-white/10"
+                  : "border-swamp text-swamp hover:bg-swamp/10"
+              }`}
+            >
+              <LogIn size={18} /> Login
+            </a>
+            <a
+              href="/contact"
+              className="bg-swamp text-white py-2 px-6 rounded-2xl text-[20px] font-semibold hover:bg-[#02543d] transition-colors"
+            >
+              Contact Us
+            </a>
           </div>
 
           <button
@@ -110,6 +125,21 @@ const Header = () => {
                   className="w-full"
                 >
                   <a
+                    href="/admin/login"
+                    className="flex items-center justify-center gap-2 border-2 border-swamp text-swamp py-3 px-6 rounded-2xl text-center text-lg font-semibold hover:bg-swamp/10 transition-colors"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <LogIn size={18} /> Login
+                  </a>
+                </motion.li>
+                <motion.li
+                  variants={{
+                    visible: { opacity: 1, y: 0 },
+                    hidden: { opacity: 0, y: -10 },
+                  }}
+                  className="w-full"
+                >
+                  <a
                     href="/contact"
                     className="block bg-swamp text-white py-3 px-6 rounded-2xl text-center text-lg font-semibold hover:bg-[#02543d] transition-colors"
                     onClick={() => setMenuOpen(false)}
@@ -136,6 +166,7 @@ type LinkProp = {
 const headerLinks: LinkProp[] = [
   { name: "Home", href: "/" },
   { name: "Events", href: "/events" },
+  { name: "Blog", href: "/blog" },
   { name: "Executives", href: "/executives" },
   { name: "Teams", href: "/teams" },
   { name: "Resources", href: "/resources" },

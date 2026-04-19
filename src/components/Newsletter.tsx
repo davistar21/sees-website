@@ -1,65 +1,62 @@
-import React, {useState} from "react"
+import React, { useState } from "react"
+import { supabase } from "../lib/supabase"
 
 const Newsletter = () => {
   const [email, setEmail] = useState("")
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
   const [message, setMessage] = useState("")
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setMessage("");
+    e.preventDefault()
     setLoading(true)
+    setStatus("idle")
 
-    try{
-      const response = await fetch ("https://sees-api.onrender.com/subscribers/", {
-        method : "POST",
-        headers : {
-          "Content-type" : "application/json"
-        },
-        body : JSON.stringify({email}),
-      });
+    const { error } = await supabase
+      .from("subscribers")
+      .insert({ email })
 
-      if(response.status === 201){
-        setMessage("Subscription successful! Thank you for subscribing");
-        setEmail("")
-        alert(message)
-      }else if(response.status === 400){
-         const data = await response.json();
-        setMessage(`${data.detail || "Invalid email or already subscribed."}`);
-        alert(message)
-      } else {
-        setMessage("Something went wrong. Please try again later.");
-        alert(message)
-      }
-    }catch(error){
-       setMessage("Network error. Please check your connection.");
-       alert(message)
-    }finally {
-      setLoading(false);
+    if (!error) {
+      setStatus("success")
+      setMessage("Subscribed! Thank you.")
+      setEmail("")
+    } else if (error.code === "23505") {
+      // Unique constraint — already subscribed
+      setStatus("error")
+      setMessage("This email is already subscribed.")
+    } else {
+      setStatus("error")
+      setMessage("Something went wrong. Please try again.")
     }
+
+    setLoading(false)
   }
+
   return (
     <div>
       <div className="newsletter">
         <div className="form-container">
-            <div className="subscribe">
-                Subscribe to our Newsletter
-            </div>
-    <form onSubmit={handleSubmit}>
-            <input 
-            className="input"
-            type="text" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            placeholder="Email address"
+          <div className="subscribe">Subscribe to our Newsletter</div>
+          <form onSubmit={handleSubmit}>
+            <input
+              className="input"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="Email address"
             />
-
             <div className="subscribe-btn">
-                <button type="submit" disabled={loading}>{loading ? "Subscribing..." : "Subscribe"}
-                </button>
+              <button type="submit" disabled={loading}>
+                {loading ? "Subscribing..." : "Subscribe"}
+              </button>
             </div>
-            </form>
+          </form>
+          {message && (
+            <p className={`text-sm mt-2 ${status === "success" ? "text-green-400" : "text-red-400"}`}>
+              {message}
+            </p>
+          )}
         </div>
       </div>
     </div>

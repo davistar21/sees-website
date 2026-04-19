@@ -1,33 +1,36 @@
+import { Link } from "react-router-dom";
+
 type ContentCardProps = {
-  img: string; // this will be your image URL
+  id: string;
+  img: string;
+  title: string;
+  excerpt: string;
+  readTime: number; // minutes
 };
 
-const ContentCard = (props: ContentCardProps) => {
+const ContentCard = ({ id, img, title, excerpt, readTime }: ContentCardProps) => {
   return (
     <div className="content-card">
       <div
         className="content-img"
-        style={{ backgroundImage: `url(${props.img})` }}
-      ></div>
+        style={{ backgroundImage: `url(${img})` }}
+      />
 
       <div className="brief-intro">
         <div className="title-and-time">
-          <div className="content-title">The Fall</div>
-
+          <div className="content-title">{title}</div>
           <div className="time">
-            <div className="time-text">3 min</div>
+            <div className="time-text">{readTime} min</div>
             <div className="timer">
               <img src="/image copy.png" alt="timer icon" />
             </div>
           </div>
         </div>
 
-        <div className="short-text">
-          It was the sign out of 2025 when Sunmisola Ganikale saw a bright...
-        </div>
+        <div className="short-text">{excerpt}</div>
 
         <div className="read-more">
-          <a href="#">Read more</a>
+          <Link to={`/blog/${id}`}>Read more</Link>
         </div>
       </div>
     </div>
