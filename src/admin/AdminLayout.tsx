@@ -12,12 +12,14 @@ import {
   Menu,
   Newspaper,
   UserSquare2,
+  UsersRound,
 } from "lucide-react";
 
 const navItems = [
   { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
   { label: "Events", href: "/admin/events", icon: CalendarDays },
   { label: "Executives", href: "/admin/executives", icon: Users },
+  { label: "Teams", href: "/admin/teams", icon: UsersRound },
   { label: "HOD", href: "/admin/hod", icon: UserSquare2 },
   { label: "Resources", href: "/admin/resources", icon: BookOpen },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },
