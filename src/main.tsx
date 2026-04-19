@@ -22,6 +22,7 @@ import AdminHomepage from "./admin/pages/AdminHomepage.tsx";
 import AdminNewsletter from "./admin/pages/AdminNewsletter.tsx";
 import AdminBlog from "./admin/pages/AdminBlog.tsx";
 import AdminHod from "./admin/pages/AdminHod.tsx";
+import AdminTeams from "./admin/pages/AdminTeams.tsx";
 import ProtectedRoute from "./admin/components/ProtectedRoute.tsx";
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 
@@ -80,6 +81,10 @@ const router = createBrowserRouter([
       {
         path: "blog",
         element: <ProtectedRoute><AdminBlog /></ProtectedRoute>,
+      },
+      {
+        path: "teams",
+        element: <ProtectedRoute><AdminTeams /></ProtectedRoute>,
       },
       {
         path: "hod",

@@ -23,6 +23,23 @@ create table if not exists events (
 alter table events add column if not exists youtube_url    text;
 alter table events add column if not exists gallery_images jsonb not null default '[]'::jsonb;
 
+-- Team Members (website build team, grouped by category)
+create table if not exists team_members (
+  id            uuid primary key default gen_random_uuid(),
+  name          text not null,
+  role          text not null,
+  description   text,
+  image_url     text,
+  portfolio     text not null default '#',
+  category      text not null default 'Team',
+  display_order int not null default 0,
+  created_at    timestamptz not null default now()
+);
+
+alter table team_members enable row level security;
+create policy if not exists "public read team_members"  on team_members for select using (true);
+create policy if not exists "auth write team_members"   on team_members for all using (auth.role() = 'authenticated');
+
 -- Executives
 create table if not exists executives (
   id            uuid primary key default gen_random_uuid(),
