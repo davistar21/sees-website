@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
-import { supabase, type DBEvent } from "../../lib/supabase";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { supabase, type DBEvent, type GalleryImage } from "../../lib/supabase";
+import { Plus, Pencil, Trash2, X, Image } from "lucide-react";
 import {
   Field,
   Modal,
@@ -8,7 +8,16 @@ import {
   inputClass,
 } from "../components/FormField";
 
-type EventForm = Omit<DBEvent, "id" | "created_at">;
+type GallerySlot = {
+  url: string;
+  description: string;
+  file?: File;
+  preview?: string;
+};
+
+type EventForm = Omit<DBEvent, "id" | "created_at" | "gallery_images"> & {
+  gallery_images: GallerySlot[];
+};
 
 const blank: EventForm = {
   title: "",
@@ -19,6 +28,8 @@ const blank: EventForm = {
   event_date: "",
   category: "Corporate events",
   is_featured: false,
+  youtube_url: "",
+  gallery_images: [],
 };
 
 const AdminEvents = () => {
@@ -28,7 +39,10 @@ const AdminEvents = () => {
   const [editing, setEditing] = useState<DBEvent | null>(null);
   const [form, setForm] = useState<EventForm>(blank);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string>("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mainPreview, setMainPreview] = useState<string>("");
+  const galleryRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const fetchEvents = async () => {
     const { data } = await supabase
@@ -47,11 +61,17 @@ const AdminEvents = () => {
     setEditing(null);
     setForm(blank);
     setImageFile(null);
+    setMainPreview("");
+    setSaveError("");
     setModalOpen(true);
   };
 
   const openEdit = (event: DBEvent) => {
     setEditing(event);
+    const slots: GallerySlot[] = (event.gallery_images ?? []).map((g) => ({
+      url: g.url,
+      description: g.description,
+    }));
     setForm({
       title: event.title,
       description: event.description ?? "",
@@ -61,19 +81,19 @@ const AdminEvents = () => {
       event_date: event.event_date ?? "",
       category: event.category,
       is_featured: event.is_featured,
+      youtube_url: event.youtube_url ?? "",
+      gallery_images: slots,
     });
     setImageFile(null);
+    setMainPreview(event.image_url ?? "");
     setModalOpen(true);
   };
 
-  const uploadImage = async (): Promise<string | null> => {
-    if (!imageFile) return form.image_url || null;
-    const ext = imageFile.name.split(".").pop();
-    const path = `events/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("images")
-      .upload(path, imageFile);
-    if (error) return form.image_url || null;
+  const uploadFile = async (file: File, folder: string): Promise<string | null> => {
+    const ext = file.name.split(".").pop();
+    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("images").upload(path, file);
+    if (error) return null;
     const { data } = supabase.storage.from("images").getPublicUrl(path);
     return data.publicUrl;
   };
@@ -81,14 +101,52 @@ const AdminEvents = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    const image_url = await uploadImage();
-    const payload = { ...form, image_url };
-    if (editing) {
-      await supabase.from("events").update(payload).eq("id", editing.id);
-    } else {
-      await supabase.from("events").insert(payload);
+    setSaveError("");
+
+    // Upload main image
+    let image_url = form.image_url || null;
+    if (imageFile) {
+      image_url = await uploadFile(imageFile, "events");
     }
+
+    // Upload gallery images
+    const gallery_images: GalleryImage[] = [];
+    for (const slot of form.gallery_images) {
+      if (slot.file) {
+        const url = await uploadFile(slot.file, "events/gallery");
+        if (url) gallery_images.push({ url, description: slot.description });
+      } else if (slot.url) {
+        gallery_images.push({ url: slot.url, description: slot.description });
+      }
+    }
+
+    const payload = {
+      title: form.title,
+      description: form.description,
+      image_url,
+      location: form.location,
+      event_time: form.event_time,
+      event_date: form.event_date,
+      category: form.category,
+      is_featured: form.is_featured,
+      youtube_url: form.youtube_url || null,
+      gallery_images,
+    };
+
+    let dbError: string | null = null;
+    if (editing) {
+      const { error } = await supabase.from("events").update(payload).eq("id", editing.id);
+      if (error) dbError = error.message;
+    } else {
+      const { error } = await supabase.from("events").insert(payload);
+      if (error) dbError = error.message;
+    }
+
     setSaving(false);
+    if (dbError) {
+      setSaveError(dbError);
+      return;
+    }
     setModalOpen(false);
     fetchEvents();
   };
@@ -97,6 +155,35 @@ const AdminEvents = () => {
     if (!confirm("Delete this event?")) return;
     await supabase.from("events").delete().eq("id", id);
     fetchEvents();
+  };
+
+  const addGallerySlot = () => {
+    if (form.gallery_images.length >= 5) return;
+    setForm((f) => ({
+      ...f,
+      gallery_images: [...f.gallery_images, { url: "", description: "" }],
+    }));
+  };
+
+  const removeGallerySlot = (index: number) => {
+    setForm((f) => ({
+      ...f,
+      gallery_images: f.gallery_images.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateGallerySlot = (index: number, patch: Partial<GallerySlot>) => {
+    setForm((f) => ({
+      ...f,
+      gallery_images: f.gallery_images.map((slot, i) =>
+        i === index ? { ...slot, ...patch } : slot
+      ),
+    }));
+  };
+
+  const handleGalleryFile = (index: number, file: File) => {
+    const preview = URL.createObjectURL(file);
+    updateGallerySlot(index, { file, preview });
   };
 
   return (
@@ -125,27 +212,16 @@ const AdminEvents = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
-                  Title
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">
-                  Category
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">
-                  Date
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">
-                  Location
-                </th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Title</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Category</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden md:table-cell">Date</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Location</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {events.map((event) => (
-                <tr
-                  key={event.id}
-                  className="hover:bg-gray-50 transition-colors"
-                >
+                <tr key={event.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-4 py-3 font-medium text-gray-900">
                     <div className="flex items-center gap-3">
                       {event.image_url && (
@@ -155,20 +231,12 @@ const AdminEvents = () => {
                           className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
                         />
                       )}
-                      <span className="truncate max-w-[180px]">
-                        {event.title}
-                      </span>
+                      <span className="truncate max-w-[180px]">{event.title}</span>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
-                    {event.category}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
-                    {event.event_date ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
-                    {event.location ?? "—"}
-                  </td>
+                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{event.category}</td>
+                  <td className="px-4 py-3 text-gray-500 hidden md:table-cell">{event.event_date ?? "—"}</td>
+                  <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{event.location ?? "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
                       <button
@@ -202,31 +270,27 @@ const AdminEvents = () => {
               <input
                 className={inputClass}
                 value={form.title}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, title: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 required
               />
             </Field>
+
             <Field label="Description">
               <textarea
                 className={`${inputClass} resize-none`}
                 rows={3}
                 value={form.description ?? ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, description: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               />
             </Field>
+
             <div className="grid grid-cols-2 gap-4">
               <Field label="Date">
                 <input
                   type="date"
                   className={inputClass}
                   value={form.event_date ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, event_date: e.target.value }))
-                  }
+                  onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
                 />
               </Field>
               <Field label="Time">
@@ -234,51 +298,145 @@ const AdminEvents = () => {
                   type="time"
                   className={inputClass}
                   value={form.event_time ?? ""}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, event_time: e.target.value }))
-                  }
+                  onChange={(e) => setForm((f) => ({ ...f, event_time: e.target.value }))}
                 />
               </Field>
             </div>
+
             <Field label="Location">
               <input
                 className={inputClass}
                 value={form.location ?? ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, location: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
               />
             </Field>
+
             <Field label="Category">
               <select
                 className={inputClass}
                 value={form.category}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, category: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
               >
                 <option>Corporate events</option>
                 <option>Sport events</option>
                 <option>Fun events</option>
               </select>
             </Field>
-            <Field label="Image">
+
+            <Field label="Main Image">
               <input
                 type="file"
                 accept="image/*"
                 className={inputClass}
-                onChange={(e) =>
-                  setImageFile(e.target.files?.[0] ?? null)
-                }
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  setImageFile(file);
+                  if (file) setMainPreview(URL.createObjectURL(file));
+                }}
               />
-              {form.image_url && !imageFile && (
+              {(mainPreview || form.image_url) && (
                 <img
-                  src={form.image_url}
+                  src={mainPreview || form.image_url || ""}
                   alt=""
                   className="mt-2 h-20 rounded-lg object-cover"
                 />
               )}
             </Field>
+
+            <Field label="YouTube URL (for featured video stream)">
+              <input
+                className={inputClass}
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={form.youtube_url ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Paste any YouTube link — the embed is handled automatically.
+              </p>
+            </Field>
+
+            {/* Gallery Images */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Gallery Images{" "}
+                  <span className="text-gray-400 font-normal">
+                    ({form.gallery_images.length}/5)
+                  </span>
+                </label>
+                {form.gallery_images.length < 5 && (
+                  <button
+                    type="button"
+                    onClick={addGallerySlot}
+                    className="flex items-center gap-1 text-xs text-swamp font-medium hover:opacity-70"
+                  >
+                    <Plus size={13} /> Add image
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {form.gallery_images.map((slot, i) => (
+                  <div
+                    key={i}
+                    className="border border-gray-200 rounded-xl p-3 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-500">
+                        Image {i + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeGallerySlot(i)}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      {(slot.preview || slot.url) ? (
+                        <img
+                          src={slot.preview || slot.url}
+                          alt=""
+                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border border-gray-200"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Image size={20} className="text-gray-300" />
+                        </div>
+                      )}
+                      <input
+                        ref={(el) => { galleryRefs.current[i] = el; }}
+                        type="file"
+                        accept="image/*"
+                        className={`${inputClass} text-xs`}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleGalleryFile(i, file);
+                        }}
+                      />
+                    </div>
+
+                    <input
+                      className={`${inputClass} text-xs`}
+                      placeholder="Caption / description..."
+                      value={slot.description}
+                      onChange={(e) =>
+                        updateGallerySlot(i, { description: e.target.value })
+                      }
+                    />
+                  </div>
+                ))}
+
+                {form.gallery_images.length === 0 && (
+                  <p className="text-xs text-gray-400 text-center py-3 border border-dashed border-gray-200 rounded-xl">
+                    No gallery images yet. Click "Add image" to upload up to 5.
+                  </p>
+                )}
+              </div>
+            </div>
+
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input
                 type="checkbox"
@@ -287,8 +445,15 @@ const AdminEvents = () => {
                   setForm((f) => ({ ...f, is_featured: e.target.checked }))
                 }
               />
-              Feature this event on homepage
+              Feature this event on homepage (countdown timer)
             </label>
+
+            {saveError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                {saveError}
+              </p>
+            )}
+
             <ModalActions
               onCancel={() => setModalOpen(false)}
               saving={saving}

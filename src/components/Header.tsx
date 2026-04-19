@@ -52,7 +52,7 @@ const Header = () => {
               <LogIn size={18} /> Login
             </a>
             <a
-              href="/contact"
+              href="mailto:theseesunilagofficial@gmail.com?subject=General%20Inquiry%20%E2%80%93%20SEES&body=Hello%20SEES%2C%20I'd%20like%20to%20learn%20more%20about%20your%20society%20and%20how%20I%20can%20get%20involved.%20Please%20get%20back%20to%20me%20at%20your%20earliest%20convenience.%20Thank%20you."
               className="bg-swamp text-white py-2 px-6 rounded-2xl text-[20px] font-semibold hover:bg-[#02543d] transition-colors"
             >
               Contact Us

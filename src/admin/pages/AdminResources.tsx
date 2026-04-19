@@ -24,7 +24,14 @@ const typeLabels: Record<Resource["type"], string> = {
   textbook: "Textbook",
 };
 
-const levelOptions = [null, 100, 200, 300, 400, 500];
+const levelOptions = [
+  { value: null, label: "General (all levels)" },
+  { value: 100, label: "100 Level" },
+  { value: 200, label: "200 Level" },
+  { value: 300, label: "300 Level" },
+  { value: 400, label: "400 Level" },
+  { value: 500, label: "500 Level" },
+];
 
 const AdminResources = () => {
   const [resources, setResources] = useState<Resource[]>([]);
@@ -144,7 +151,7 @@ const AdminResources = () => {
                     {typeLabels[resource.type]}
                   </td>
                   <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
-                    {resource.level ? `${resource.level} Level` : "All levels"}
+                    {resource.level ? `${resource.level} Level` : "General"}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
@@ -223,9 +230,9 @@ const AdminResources = () => {
                   }))
                 }
               >
-                {levelOptions.map((lvl) => (
-                  <option key={lvl ?? "all"} value={lvl ?? ""}>
-                    {lvl ? `${lvl} Level` : "All levels"}
+                {levelOptions.map(({ value, label }) => (
+                  <option key={value ?? "all"} value={value ?? ""}>
+                    {label}
                   </option>
                 ))}
               </select>
