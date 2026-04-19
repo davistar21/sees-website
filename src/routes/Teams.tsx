@@ -13,9 +13,10 @@ type TeamSectionProps = {
   members: Member[];
 };
 
-export const Carousel = () => {
-  const membersImages = [...developers, ...designers].flatMap((e) => e.image);
-  membersImages.push("contentone.jpg");
+export const Carousel = ({ images }: { images?: string[] }) => {
+  const defaultImages = [...developers, ...designers].flatMap((e) => e.image);
+  defaultImages.push("contentone.jpg");
+  const membersImages = images && images.length > 0 ? images : defaultImages;
   // const currentIndex = Math.ceil(membersImages.length / 2);
   // const calculateTransform = (index: number) => {
   //   const offset = index - currentIndex; // negative = left, positive = right
