@@ -18,7 +18,7 @@ export default function Footer() {
       <div className="w-full mx-auto grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr] gap-16 p-12">
         <div className="flex flex-col items-center md:items-start gap-2">
           <div className="w-[87px]">
-            <img src="/sees-logo-white.png" alt="logo" />
+            <img src="/sees-logo-white.png" alt="logo" loading="lazy" />
           </div>
           <p className="text-lg text-center md:text-left">
             Society of Electrical, Electronics, and Computer Engineering Students

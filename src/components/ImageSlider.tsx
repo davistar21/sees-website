@@ -32,6 +32,7 @@ const ImageSlider: React.FC<ImageSliderProps> = ({
           key={i}
           src={src}
           alt={`Slide ${i + 1}`}
+          loading={i === 0 ? "eager" : "lazy"}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
             i === current ? "opacity-100" : "opacity-0"
           }`}

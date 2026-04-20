@@ -40,8 +40,21 @@ const AdminTeams = () => {
   const [form, setForm] = useState<MemberForm>(blank);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [fileError, setFileError] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
+
+  const MAX_PHOTO_MB = 3;
+  const pickPhoto = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
+      setFileError(`Photo must be under ${MAX_PHOTO_MB} MB (selected: ${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+      return;
+    }
+    setFileError("");
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
+  };
 
   // Derived list of existing category names for the datalist autocomplete
   const categories = Array.from(new Set(members.map((m) => m.category))).filter(Boolean);
@@ -98,6 +111,7 @@ const AdminTeams = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (fileError) return;
     setSaving(true);
     setSaveError("");
 
@@ -178,6 +192,7 @@ const AdminTeams = () => {
                           <img
                             src={m.image_url}
                             alt=""
+                            loading="lazy"
                             className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                           />
                         )}
@@ -283,21 +298,21 @@ const AdminTeams = () => {
               />
             </Field>
 
-            <Field label="Photo">
+            <Field label={`Photo (max ${MAX_PHOTO_MB} MB)`}>
               <input
                 type="file"
                 accept="image/*"
                 className={inputClass}
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null;
-                  setImageFile(file);
-                  if (file) setPreview(URL.createObjectURL(file));
-                }}
+                onChange={(e) => pickPhoto(e.target.files?.[0])}
               />
+              {fileError && (
+                <p className="text-xs text-red-600 mt-1">{fileError}</p>
+              )}
               {preview && (
                 <img
                   src={preview}
                   alt=""
+                  loading="lazy"
                   className="mt-2 h-20 w-20 rounded-full object-cover"
                 />
               )}

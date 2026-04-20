@@ -43,6 +43,7 @@ const AdminLayout = () => {
         <img
           src="/sees-logo-white.png"
           alt="SEES"
+          loading="eager"
           className="h-10 object-contain"
         />
         <p className="text-white/50 text-xs mt-2 font-semibold tracking-widest uppercase">

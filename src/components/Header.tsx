@@ -6,7 +6,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   // const location = useLocation();
-  const onMainPage = location.pathname === "/";
+  const onDarkHeroPage = ["/", "/events"].includes(location.pathname);
   const toggleMenu = () => setMenuOpen((prev) => !prev);
   useEffect(() => {
     const handleScroll = () => {
@@ -30,6 +30,7 @@ const Header = () => {
             <img
               src="/sees-logo-black.png"
               alt="logo"
+              loading="eager"
               className="w-full h-full object-contain"
             />
           </div>
@@ -44,7 +45,7 @@ const Header = () => {
             <a
               href="/admin/login"
               className={`flex items-center gap-2 py-2 px-4 rounded-2xl text-[18px] font-semibold border transition-colors ${
-                !isScrolled && onMainPage
+                !isScrolled && onDarkHeroPage
                   ? "border-white/50 text-white hover:bg-white/10"
                   : "border-swamp text-swamp hover:bg-swamp/10"
               }`}
@@ -63,7 +64,7 @@ const Header = () => {
             onClick={toggleMenu}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             className={`md:hidden flex items-center justify-center p-2 rounded-md  transition  ${
-              !isScrolled && onMainPage
+              !isScrolled && onDarkHeroPage
                 ? "text-white hover:bg-swamp"
                 : "text-swamp hover:bg-gray-100"
             }`}
@@ -140,7 +141,7 @@ const Header = () => {
                   className="w-full"
                 >
                   <a
-                    href="/contact"
+                    href="mailto:theseesunilagofficial@gmail.com?subject=Inquiry%20from%20SEES%20Website&body=Hello%20SEES%20Team%2C%20I%20hope%20this%20message%20finds%20you%20well.%20My%20name%20is%20%5BYour%20Name%5D%2C%20and%20I%20am%20reaching%20out%20regarding%20%5Byour%20reason%5D.%20Please%20find%20the%20details%20of%20my%20inquiry%20below.%20I%20would%20appreciate%20your%20response%20at%20your%20earliest%20convenience.%20Thank%20you%20for%20your%20time%20and%20consideration.%20Best%20regards%2C%20%5BYour%20Name%5D."
                     className="block bg-swamp text-white py-3 px-6 rounded-2xl text-center text-lg font-semibold hover:bg-[#02543d] transition-colors"
                     onClick={() => setMenuOpen(false)}
                   >
@@ -185,12 +186,12 @@ const HeaderLink: React.FC<
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   const onPage = location.pathname === href;
-  const onMainPage = location.pathname === "/";
+  const onDarkHeroPage = ["/", "/events"].includes(location.pathname);
   return (
     <a
       href={href}
       className={`group text-lg md:text-[20px] font-medium transition-colors  hover:text-green-600 relative ${
-        !mobile && onMainPage && !isScrolled ? "text-white" : "text-swamp"
+        !mobile && onDarkHeroPage && !isScrolled ? "text-white" : "text-swamp"
       }`}
     >
       <AnimatePresence>
@@ -201,7 +202,7 @@ const HeaderLink: React.FC<
             exit={{ scaleX: 0 }}
             transition={{ duration: 0.8 }}
             className={`group-hover:bg-green-600 transition-colors absolute w-full h-[2px] rounded-full bottom-0 left-0 ${
-              !mobile && onMainPage && !isScrolled ? "bg-white" : "bg-swamp"
+              !mobile && onDarkHeroPage && !isScrolled ? "bg-white" : "bg-swamp"
             }`}
           ></motion.div>
         )}

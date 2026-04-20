@@ -31,6 +31,18 @@ const AdminBlog = () => {
   const [form, setForm] = useState<PostForm>(blank);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
+
+  const MAX_COVER_MB = 5;
+  const pickCover = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_COVER_MB * 1024 * 1024) {
+      setFileError(`Cover image must be under ${MAX_COVER_MB} MB (selected: ${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+      return;
+    }
+    setFileError("");
+    setImageFile(file);
+  };
 
   const fetchPosts = async () => {
     const { data } = await supabase
@@ -77,6 +89,7 @@ const AdminBlog = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (fileError) return;
     setSaving(true);
     const image_url = await uploadImage();
     const payload = { ...form, image_url };
@@ -144,6 +157,7 @@ const AdminBlog = () => {
                         <img
                           src={post.image_url}
                           alt=""
+                          loading="lazy"
                           className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
                         />
                       )}
@@ -213,15 +227,16 @@ const AdminBlog = () => {
                 placeholder="e.g. SEES Team"
               />
             </Field>
-            <Field label="Cover Image">
+            <Field label={`Cover Image (max ${MAX_COVER_MB} MB)`}>
               <input
                 type="file"
                 accept="image/*"
                 className={inputClass}
-                onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => pickCover(e.target.files?.[0])}
               />
+              {fileError && <p className="text-xs text-red-600 mt-1">{fileError}</p>}
               {form.image_url && !imageFile && (
-                <img src={form.image_url} alt="" className="mt-2 h-20 w-full rounded-lg object-cover" />
+                <img src={form.image_url} alt="" loading="lazy" className="mt-2 h-20 w-full rounded-lg object-cover" />
               )}
             </Field>
             <Field label="Content">

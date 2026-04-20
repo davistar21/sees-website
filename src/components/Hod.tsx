@@ -33,7 +33,7 @@ const Hod = () => {
               {bio}
             </div>
             <div className="left-contact">
-              <a href={contact || "#"}>Contact</a>
+              <a href={contact || "mailto:hod.eeed@unilag.edu.ng"}>Contact</a>
             </div>
           </div>
 

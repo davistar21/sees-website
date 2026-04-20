@@ -7,10 +7,65 @@ import Resources from "./routes/Resources";
 import ContentCard from "./components/ContentCard";
 import Hod from "./components/Hod";
 import Newsletter from "./components/Newsletter";
-import { supabase, type HeroSlide } from "./lib/supabase";
+import { supabase, type HeroSlide, type Announcement } from "./lib/supabase";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 
+// ---------------------------------------------------------------------------
+// Announcement banner
+// ---------------------------------------------------------------------------
+const AnnouncementBanner = ({ items }: { items: Announcement[] }) => {
+  const [idx, setIdx] = useState(0);
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed || items.length === 0) return null;
+
+  const current = items[idx];
+
+  return (
+    <div className="fixed top-[70px] md:top-[87px] left-0 right-0 z-40 bg-swamp text-white px-4 py-2 flex items-center gap-3 shadow-md">
+      {items.length > 1 && (
+        <button
+          onClick={() => setIdx((i) => (i === 0 ? items.length - 1 : i - 1))}
+          className="shrink-0 hover:opacity-70 transition-opacity"
+        >
+          <ChevronLeft size={16} />
+        </button>
+      )}
+
+      <p className="flex-1 text-center text-sm min-w-0 truncate">
+        <span className="font-semibold">{current.title}</span>
+        {current.content && (
+          <span className="text-white/80 ml-2 hidden sm:inline">{current.content}</span>
+        )}
+      </p>
+
+      {items.length > 1 && (
+        <button
+          onClick={() => setIdx((i) => (i === items.length - 1 ? 0 : i + 1))}
+          className="shrink-0 hover:opacity-70 transition-opacity"
+        >
+          <ChevronRight size={16} />
+        </button>
+      )}
+      {items.length > 1 && (
+        <span className="text-white/50 text-xs shrink-0">{idx + 1}/{items.length}</span>
+      )}
+
+      <button
+        onClick={() => setDismissed(true)}
+        className="shrink-0 hover:opacity-70 transition-opacity ml-1"
+        aria-label="Dismiss announcement"
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Types & helpers
+// ---------------------------------------------------------------------------
 type BlogPreview = {
   id: string;
   title: string;
@@ -30,26 +85,26 @@ const fallbackSlides: HeroSlide[] = [
   {
     id: "1",
     image_url: "/bg-one.jpg",
-    title: "Student Initiative Programme",
-    subtitle: "Theme: The light of the young shall prevail",
+    title: "SEES HOD GAMES 2026",
+    subtitle: "Theme: Legacy of Excellence",
     display_order: 0,
     active: true,
     created_at: "",
   },
   {
     id: "2",
-    image_url: "/bg-two.png",
+    image_url: "/bg-two.JPG",
     title: "Student Debate Competition",
-    subtitle: "Theme: The light of the young shall prevail",
+    subtitle: "Theme: Learning Reimagined: AI and the the Future of Education",
     display_order: 1,
     active: true,
     created_at: "",
   },
   {
     id: "3",
-    image_url: "/bg-three.png",
+    image_url: "/bg-three.jpg",
     title: "Student Food Drive",
-    subtitle: "Theme: The light of the young shall prevail",
+    subtitle: "heme: Learning Reimagined: AI and the the Future of Education",
     display_order: 2,
     active: true,
     created_at: "",
@@ -68,9 +123,13 @@ const calcTimeLeft = (target: string): TimeLeft => {
   };
 };
 
+// ---------------------------------------------------------------------------
+// App
+// ---------------------------------------------------------------------------
 const App = () => {
   const [slides, setSlides] = useState<HeroSlide[]>(fallbackSlides);
   const [posts, setPosts] = useState<BlogPreview[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [countdownTarget, setCountdownTarget] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, mins: 0 });
 
@@ -99,7 +158,15 @@ const App = () => {
         if (data) setPosts(data);
       });
 
-    // Grab the nearest upcoming featured event for the countdown
+    supabase
+      .from("announcements")
+      .select("*")
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data) setAnnouncements(data);
+      });
+
     supabase
       .from("events")
       .select("event_date, event_time")
@@ -115,7 +182,6 @@ const App = () => {
       });
   }, []);
 
-  // Tick every second when we have a target
   useEffect(() => {
     if (!countdownTarget) return;
     setTimeLeft(calcTimeLeft(countdownTarget));
@@ -149,7 +215,6 @@ const App = () => {
     return () => clearInterval(interval);
   }, [slides]);
 
-  // Fallback cards shown while DB is empty
   const fallbackPosts: BlogPreview[] = [
     { id: "", title: "The Fall", content: "It was the sign out of 2025 when Sunmisola Ganikale saw a bright light in the distance and knew things would never be the same again for the students.", image_url: "/contenttwo.jpg" },
     { id: "", title: "Rising Up", content: "The engineering students gathered at dawn, ready to face the challenges that lay ahead in the new academic session with determination.", image_url: "/contentone.jpg" },
@@ -160,6 +225,8 @@ const App = () => {
 
   return (
     <div className="all-contents">
+      <AnnouncementBanner items={announcements} />
+
       <div className="main pt-[70px] md:pt-[87px]" ref={mainRef}>
         <div className="overlay"></div>
 

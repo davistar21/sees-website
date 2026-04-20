@@ -20,6 +20,8 @@ const blankSlide: SlideForm = {
   active: true,
 };
 
+const MAX_SLIDE_MB = 8;
+
 const HeroSlides = () => {
   const [slides, setSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,17 @@ const HeroSlides = () => {
   const [form, setForm] = useState<SlideForm>(blankSlide);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
+
+  const pickImage = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_SLIDE_MB * 1024 * 1024) {
+      setFileError(`Image must be under ${MAX_SLIDE_MB} MB (selected: ${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+      return;
+    }
+    setFileError("");
+    setImageFile(file);
+  };
 
   const fetchSlides = async () => {
     const { data } = await supabase
@@ -46,6 +59,7 @@ const HeroSlides = () => {
     setEditing(null);
     setForm(blankSlide);
     setImageFile(null);
+    setFileError("");
     setModalOpen(true);
   };
 
@@ -59,6 +73,7 @@ const HeroSlides = () => {
       active: slide.active,
     });
     setImageFile(null);
+    setFileError("");
     setModalOpen(true);
   };
 
@@ -66,9 +81,7 @@ const HeroSlides = () => {
     if (!imageFile) return form.image_url;
     const ext = imageFile.name.split(".").pop();
     const path = `hero/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage
-      .from("images")
-      .upload(path, imageFile);
+    const { error } = await supabase.storage.from("images").upload(path, imageFile);
     if (error) return form.image_url;
     const { data } = supabase.storage.from("images").getPublicUrl(path);
     return data.publicUrl;
@@ -76,6 +89,7 @@ const HeroSlides = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (fileError) return;
     setSaving(true);
     const image_url = await uploadImage();
     const payload = { ...form, image_url };
@@ -90,10 +104,7 @@ const HeroSlides = () => {
   };
 
   const toggleActive = async (slide: HeroSlide) => {
-    await supabase
-      .from("hero_slides")
-      .update({ active: !slide.active })
-      .eq("id", slide.id);
+    await supabase.from("hero_slides").update({ active: !slide.active }).eq("id", slide.id);
     fetchSlides();
   };
 
@@ -124,15 +135,9 @@ const HeroSlides = () => {
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
-                  Slide
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">
-                  Order
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
-                  Active
-                </th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Slide</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Order</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Active</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -144,49 +149,32 @@ const HeroSlides = () => {
                       <img
                         src={slide.image_url}
                         alt=""
+                        loading="lazy"
                         className="w-12 h-8 rounded-lg object-cover flex-shrink-0"
                       />
                       <div>
-                        <p className="font-medium text-gray-900 truncate max-w-[160px]">
-                          {slide.title}
-                        </p>
+                        <p className="font-medium text-gray-900 truncate max-w-[160px]">{slide.title}</p>
                         {slide.subtitle && (
-                          <p className="text-xs text-gray-400 truncate max-w-[160px]">
-                            {slide.subtitle}
-                          </p>
+                          <p className="text-xs text-gray-400 truncate max-w-[160px]">{slide.subtitle}</p>
                         )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">
-                    {slide.display_order}
-                  </td>
+                  <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{slide.display_order}</td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => toggleActive(slide)}
-                      className={`transition-colors ${
-                        slide.active ? "text-swamp" : "text-gray-300"
-                      }`}
+                      className={`transition-colors ${slide.active ? "text-swamp" : "text-gray-300"}`}
                     >
-                      {slide.active ? (
-                        <ToggleRight size={24} />
-                      ) : (
-                        <ToggleLeft size={24} />
-                      )}
+                      {slide.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
                     </button>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
-                      <button
-                        onClick={() => openEdit(slide)}
-                        className="p-1.5 text-gray-400 hover:text-swamp transition-colors"
-                      >
+                      <button onClick={() => openEdit(slide)} className="p-1.5 text-gray-400 hover:text-swamp transition-colors">
                         <Pencil size={15} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(slide.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                      >
+                      <button onClick={() => handleDelete(slide.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -199,18 +187,13 @@ const HeroSlides = () => {
       </div>
 
       {modalOpen && (
-        <Modal
-          title={editing ? "Edit Slide" : "New Slide"}
-          onClose={() => setModalOpen(false)}
-        >
+        <Modal title={editing ? "Edit Slide" : "New Slide"} onClose={() => setModalOpen(false)}>
           <form onSubmit={handleSave} className="space-y-4">
             <Field label="Slide Title" required>
               <input
                 className={inputClass}
                 value={form.title}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, title: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 required
                 placeholder="e.g. Student Initiative Programme"
               />
@@ -219,25 +202,20 @@ const HeroSlides = () => {
               <input
                 className={inputClass}
                 value={form.subtitle ?? ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, subtitle: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, subtitle: e.target.value }))}
                 placeholder="e.g. Theme: The light of the young shall prevail"
               />
             </Field>
-            <Field label="Background Image" required>
+            <Field label={`Background Image (max ${MAX_SLIDE_MB} MB)`} required>
               <input
                 type="file"
                 accept="image/*"
                 className={inputClass}
-                onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => pickImage(e.target.files?.[0])}
               />
+              {fileError && <p className="text-xs text-red-600 mt-1">{fileError}</p>}
               {form.image_url && !imageFile && (
-                <img
-                  src={form.image_url}
-                  alt=""
-                  className="mt-2 h-20 w-full rounded-lg object-cover"
-                />
+                <img src={form.image_url} alt="" loading="lazy" className="mt-2 h-20 w-full rounded-lg object-cover" />
               )}
             </Field>
             <Field label="Display Order">
@@ -245,29 +223,18 @@ const HeroSlides = () => {
                 type="number"
                 className={inputClass}
                 value={form.display_order}
-                onChange={(e) =>
-                  setForm((f) => ({
-                    ...f,
-                    display_order: parseInt(e.target.value) || 0,
-                  }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, display_order: parseInt(e.target.value) || 0 }))}
               />
             </Field>
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.active}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, active: e.target.checked }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
               />
               Active (visible on homepage)
             </label>
-            <ModalActions
-              onCancel={() => setModalOpen(false)}
-              saving={saving}
-              editing={!!editing}
-            />
+            <ModalActions onCancel={() => setModalOpen(false)} saving={saving} editing={!!editing} />
           </form>
         </Modal>
       )}
@@ -322,10 +289,7 @@ const Announcements = () => {
     e.preventDefault();
     setSaving(true);
     if (editing) {
-      await supabase
-        .from("announcements")
-        .update(form)
-        .eq("id", editing.id);
+      await supabase.from("announcements").update(form).eq("id", editing.id);
     } else {
       await supabase.from("announcements").insert(form);
     }
@@ -335,10 +299,7 @@ const Announcements = () => {
   };
 
   const toggleActive = async (a: Announcement) => {
-    await supabase
-      .from("announcements")
-      .update({ active: !a.active })
-      .eq("id", a.id);
+    await supabase.from("announcements").update({ active: !a.active }).eq("id", a.id);
     fetchAnnouncements();
   };
 
@@ -364,19 +325,13 @@ const Announcements = () => {
         {loading ? (
           <div className="p-6 text-center text-gray-400">Loading...</div>
         ) : announcements.length === 0 ? (
-          <div className="p-6 text-center text-gray-400">
-            No announcements yet.
-          </div>
+          <div className="p-6 text-center text-gray-400">No announcements yet.</div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
-                  Title
-                </th>
-                <th className="text-left px-4 py-3 font-medium text-gray-600">
-                  Active
-                </th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Title</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Active</th>
                 <th className="px-4 py-3" />
               </tr>
             </thead>
@@ -386,37 +341,23 @@ const Announcements = () => {
                   <td className="px-4 py-3">
                     <p className="font-medium text-gray-900">{a.title}</p>
                     {a.content && (
-                      <p className="text-xs text-gray-400 truncate max-w-[240px]">
-                        {a.content}
-                      </p>
+                      <p className="text-xs text-gray-400 truncate max-w-[240px]">{a.content}</p>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <button
                       onClick={() => toggleActive(a)}
-                      className={`transition-colors ${
-                        a.active ? "text-swamp" : "text-gray-300"
-                      }`}
+                      className={`transition-colors ${a.active ? "text-swamp" : "text-gray-300"}`}
                     >
-                      {a.active ? (
-                        <ToggleRight size={24} />
-                      ) : (
-                        <ToggleLeft size={24} />
-                      )}
+                      {a.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
                     </button>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
-                      <button
-                        onClick={() => openEdit(a)}
-                        className="p-1.5 text-gray-400 hover:text-swamp transition-colors"
-                      >
+                      <button onClick={() => openEdit(a)} className="p-1.5 text-gray-400 hover:text-swamp transition-colors">
                         <Pencil size={15} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(a.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                      >
+                      <button onClick={() => handleDelete(a.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -438,9 +379,7 @@ const Announcements = () => {
               <input
                 className={inputClass}
                 value={form.title}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, title: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 required
               />
             </Field>
@@ -449,26 +388,18 @@ const Announcements = () => {
                 className={`${inputClass} resize-none`}
                 rows={4}
                 value={form.content ?? ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, content: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, content: e.target.value }))}
               />
             </Field>
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={form.active}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, active: e.target.checked }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
               />
               Show on site
             </label>
-            <ModalActions
-              onCancel={() => setModalOpen(false)}
-              saving={saving}
-              editing={!!editing}
-            />
+            <ModalActions onCancel={() => setModalOpen(false)} saving={saving} editing={!!editing} />
           </form>
         </Modal>
       )}

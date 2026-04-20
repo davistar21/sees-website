@@ -16,6 +16,7 @@ const Swamp404: React.FC = () => {
       <img
         src="/404-error-animate.svg"
         alt="404 Page Not Found"
+        loading="lazy"
         className="w-full max-w-md mb-8"
       />
       <motion.p
