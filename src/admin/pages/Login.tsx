@@ -33,6 +33,7 @@ const Login = () => {
             <img
               src="/sees-logo-black.png"
               alt="SEES"
+              loading="eager"
               className="h-16 mx-auto object-contain mb-4 hover:opacity-70 transition-opacity"
             />
           </a>

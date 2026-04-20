@@ -7,7 +7,19 @@ const AdminHod = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [fileError, setFileError] = useState("");
   const [saved, setSaved] = useState(false);
+
+  const MAX_PHOTO_MB = 3;
+  const pickPhoto = (file: File | undefined) => {
+    if (!file) return;
+    if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
+      setFileError(`Photo must be under ${MAX_PHOTO_MB} MB (selected: ${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+      return;
+    }
+    setFileError("");
+    setImageFile(file);
+  };
 
   const [form, setForm] = useState({
     name: "",
@@ -50,6 +62,7 @@ const AdminHod = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (fileError) return;
     setSaving(true);
     const image_url = await uploadImage();
     const payload = { ...form, image_url };
@@ -89,6 +102,7 @@ const AdminHod = () => {
             <img
               src={imageFile ? URL.createObjectURL(imageFile) : form.image_url}
               alt="HOD"
+              loading="lazy"
               className="w-24 h-24 rounded-2xl object-cover border border-gray-200"
             />
             <div>
@@ -138,16 +152,17 @@ const AdminHod = () => {
             />
           </Field>
 
-          <Field label="Photo">
+          <Field label={`Photo (max ${MAX_PHOTO_MB} MB)`}>
             <input
               type="file"
               accept="image/*"
               className={inputClass}
-              onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => pickPhoto(e.target.files?.[0])}
             />
-            <p className="text-xs text-gray-400 mt-1">
-              Upload a new photo to replace the current one
-            </p>
+            {fileError
+              ? <p className="text-xs text-red-600 mt-1">{fileError}</p>
+              : <p className="text-xs text-gray-400 mt-1">Upload a new photo to replace the current one</p>
+            }
           </Field>
 
           <div className="flex items-center gap-4 pt-2">

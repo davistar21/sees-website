@@ -80,6 +80,7 @@ const BlogPost = () => {
           <img
             src={post.image_url}
             alt={post.title}
+            loading="eager"
             className="w-full h-full object-cover"
           />
         </div>
@@ -138,6 +139,7 @@ const BlogPost = () => {
                   <img
                     src={r.image_url ?? "/contentone.jpg"}
                     alt={r.title}
+                    loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

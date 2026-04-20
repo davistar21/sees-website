@@ -90,6 +90,7 @@ const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
         <img
           src={images[idx].url}
           alt={images[idx].description}
+          loading="lazy"
           className="max-h-[70vh] max-w-full object-contain rounded-xl"
         />
 
@@ -126,6 +127,7 @@ const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
               key={i}
               src={img.url}
               alt=""
+              loading="lazy"
               onClick={() => setIdx(i)}
               className={`w-12 h-12 object-cover rounded-lg cursor-pointer border-2 transition-all ${
                 i === idx ? "border-[#95fde2]" : "border-transparent opacity-60 hover:opacity-100"
@@ -157,6 +159,7 @@ const EventCard = ({ event, onViewHighlights }: EventCardProps) => {
           <img
             src={event.image_url}
             alt={event.title}
+            loading="lazy"
             className="absolute inset-0 w-full h-full object-cover -z-10"
           />
         )}
@@ -199,6 +202,7 @@ const EventCard = ({ event, onViewHighlights }: EventCardProps) => {
               key={h}
               src={img.url}
               alt={img.description || `Gallery ${h + 1}`}
+              loading="lazy"
               className="w-14 h-14 md:w-20 md:h-20 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => onViewHighlights(event)}
             />

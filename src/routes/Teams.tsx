@@ -43,6 +43,7 @@ export const Carousel = ({ images }: { images?: string[] }) => {
             key={idx}
             src={image}
             alt={`member-${idx}`}
+            loading="lazy"
             className="w-[220px] h-[220px] object-cover rounded-2xl flex-shrink-0"
           />
         ))}
@@ -68,6 +69,7 @@ const TeamMemberCard = ({ member, index }: { member: Member; index: number }) =>
       <img
         src={member.image}
         alt={member.name}
+        loading="lazy"
         className="object-cover w-full h-full"
       />
     </div>

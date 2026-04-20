@@ -8,11 +8,19 @@ import {
   inputClass,
 } from "../components/FormField";
 
+const MAX_EVENT_MB = 8;
+
+const sizeError = (file: File) =>
+  file.size > MAX_EVENT_MB * 1024 * 1024
+    ? `Image must be under ${MAX_EVENT_MB} MB (selected: ${(file.size / 1024 / 1024).toFixed(1)} MB)`
+    : "";
+
 type GallerySlot = {
   url: string;
   description: string;
   file?: File;
   preview?: string;
+  error?: string;
 };
 
 type EventForm = Omit<DBEvent, "id" | "created_at" | "gallery_images"> & {
@@ -39,9 +47,10 @@ const AdminEvents = () => {
   const [editing, setEditing] = useState<DBEvent | null>(null);
   const [form, setForm] = useState<EventForm>(blank);
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string>("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [mainPreview, setMainPreview] = useState<string>("");
+  const [saveError, setSaveError] = useState("");
+  const [mainImageFile, setMainImageFile] = useState<File | null>(null);
+  const [mainPreview, setMainPreview] = useState("");
+  const [mainFileError, setMainFileError] = useState("");
   const galleryRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const fetchEvents = async () => {
@@ -53,15 +62,14 @@ const AdminEvents = () => {
     setLoading(false);
   };
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  useEffect(() => { fetchEvents(); }, []);
 
   const openCreate = () => {
     setEditing(null);
     setForm(blank);
-    setImageFile(null);
+    setMainImageFile(null);
     setMainPreview("");
+    setMainFileError("");
     setSaveError("");
     setModalOpen(true);
   };
@@ -84,9 +92,29 @@ const AdminEvents = () => {
       youtube_url: event.youtube_url ?? "",
       gallery_images: slots,
     });
-    setImageFile(null);
+    setMainImageFile(null);
     setMainPreview(event.image_url ?? "");
+    setMainFileError("");
+    setSaveError("");
     setModalOpen(true);
+  };
+
+  const pickMainImage = (file: File | undefined) => {
+    if (!file) return;
+    const err = sizeError(file);
+    if (err) { setMainFileError(err); return; }
+    setMainFileError("");
+    setMainImageFile(file);
+    setMainPreview(URL.createObjectURL(file));
+  };
+
+  const pickGalleryFile = (index: number, file: File | undefined) => {
+    if (!file) return;
+    const err = sizeError(file);
+    updateGallerySlot(index, err
+      ? { error: err }
+      : { file, preview: URL.createObjectURL(file), error: "" }
+    );
   };
 
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
@@ -100,16 +128,14 @@ const AdminEvents = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (mainFileError) return;
+    if (form.gallery_images.some((s) => s.error)) return;
     setSaving(true);
     setSaveError("");
 
-    // Upload main image
     let image_url = form.image_url || null;
-    if (imageFile) {
-      image_url = await uploadFile(imageFile, "events");
-    }
+    if (mainImageFile) image_url = await uploadFile(mainImageFile, "events");
 
-    // Upload gallery images
     const gallery_images: GalleryImage[] = [];
     for (const slot of form.gallery_images) {
       if (slot.file) {
@@ -143,10 +169,7 @@ const AdminEvents = () => {
     }
 
     setSaving(false);
-    if (dbError) {
-      setSaveError(dbError);
-      return;
-    }
+    if (dbError) { setSaveError(dbError); return; }
     setModalOpen(false);
     fetchEvents();
   };
@@ -159,31 +182,18 @@ const AdminEvents = () => {
 
   const addGallerySlot = () => {
     if (form.gallery_images.length >= 5) return;
-    setForm((f) => ({
-      ...f,
-      gallery_images: [...f.gallery_images, { url: "", description: "" }],
-    }));
+    setForm((f) => ({ ...f, gallery_images: [...f.gallery_images, { url: "", description: "" }] }));
   };
 
   const removeGallerySlot = (index: number) => {
-    setForm((f) => ({
-      ...f,
-      gallery_images: f.gallery_images.filter((_, i) => i !== index),
-    }));
+    setForm((f) => ({ ...f, gallery_images: f.gallery_images.filter((_, i) => i !== index) }));
   };
 
   const updateGallerySlot = (index: number, patch: Partial<GallerySlot>) => {
     setForm((f) => ({
       ...f,
-      gallery_images: f.gallery_images.map((slot, i) =>
-        i === index ? { ...slot, ...patch } : slot
-      ),
+      gallery_images: f.gallery_images.map((slot, i) => i === index ? { ...slot, ...patch } : slot),
     }));
-  };
-
-  const handleGalleryFile = (index: number, file: File) => {
-    const preview = URL.createObjectURL(file);
-    updateGallerySlot(index, { file, preview });
   };
 
   return (
@@ -205,9 +215,7 @@ const AdminEvents = () => {
         {loading ? (
           <div className="p-8 text-center text-gray-400">Loading...</div>
         ) : events.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
-            No events yet. Create your first one.
-          </div>
+          <div className="p-8 text-center text-gray-400">No events yet. Create your first one.</div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-gray-50 border-b border-gray-200">
@@ -225,11 +233,7 @@ const AdminEvents = () => {
                   <td className="px-4 py-3 font-medium text-gray-900">
                     <div className="flex items-center gap-3">
                       {event.image_url && (
-                        <img
-                          src={event.image_url}
-                          alt=""
-                          className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-                        />
+                        <img src={event.image_url} alt="" loading="lazy" className="w-8 h-8 rounded-lg object-cover flex-shrink-0" />
                       )}
                       <span className="truncate max-w-[180px]">{event.title}</span>
                     </div>
@@ -239,16 +243,10 @@ const AdminEvents = () => {
                   <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{event.location ?? "—"}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2 justify-end">
-                      <button
-                        onClick={() => openEdit(event)}
-                        className="p-1.5 text-gray-400 hover:text-swamp transition-colors"
-                      >
+                      <button onClick={() => openEdit(event)} className="p-1.5 text-gray-400 hover:text-swamp transition-colors">
                         <Pencil size={15} />
                       </button>
-                      <button
-                        onClick={() => handleDelete(event.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                      >
+                      <button onClick={() => handleDelete(event.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
                         <Trash2 size={15} />
                       </button>
                     </div>
@@ -261,85 +259,42 @@ const AdminEvents = () => {
       </div>
 
       {modalOpen && (
-        <Modal
-          title={editing ? "Edit Event" : "New Event"}
-          onClose={() => setModalOpen(false)}
-        >
+        <Modal title={editing ? "Edit Event" : "New Event"} onClose={() => setModalOpen(false)}>
           <form onSubmit={handleSave} className="space-y-4">
             <Field label="Title" required>
-              <input
-                className={inputClass}
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                required
-              />
+              <input className={inputClass} value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} required />
             </Field>
 
             <Field label="Description">
-              <textarea
-                className={`${inputClass} resize-none`}
-                rows={3}
-                value={form.description ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-              />
+              <textarea className={`${inputClass} resize-none`} rows={3} value={form.description ?? ""} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} />
             </Field>
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="Date">
-                <input
-                  type="date"
-                  className={inputClass}
-                  value={form.event_date ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
-                />
+                <input type="date" className={inputClass} value={form.event_date ?? ""} onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))} />
               </Field>
               <Field label="Time">
-                <input
-                  type="time"
-                  className={inputClass}
-                  value={form.event_time ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, event_time: e.target.value }))}
-                />
+                <input type="time" className={inputClass} value={form.event_time ?? ""} onChange={(e) => setForm((f) => ({ ...f, event_time: e.target.value }))} />
               </Field>
             </div>
 
             <Field label="Location">
-              <input
-                className={inputClass}
-                value={form.location ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-              />
+              <input className={inputClass} value={form.location ?? ""} onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))} />
             </Field>
 
             <Field label="Category">
-              <select
-                className={inputClass}
-                value={form.category}
-                onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-              >
+              <select className={inputClass} value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}>
                 <option>Corporate events</option>
                 <option>Sport events</option>
                 <option>Fun events</option>
               </select>
             </Field>
 
-            <Field label="Main Image">
-              <input
-                type="file"
-                accept="image/*"
-                className={inputClass}
-                onChange={(e) => {
-                  const file = e.target.files?.[0] ?? null;
-                  setImageFile(file);
-                  if (file) setMainPreview(URL.createObjectURL(file));
-                }}
-              />
+            <Field label={`Main Image (max ${MAX_EVENT_MB} MB)`}>
+              <input type="file" accept="image/*" className={inputClass} onChange={(e) => pickMainImage(e.target.files?.[0])} />
+              {mainFileError && <p className="text-xs text-red-600 mt-1">{mainFileError}</p>}
               {(mainPreview || form.image_url) && (
-                <img
-                  src={mainPreview || form.image_url || ""}
-                  alt=""
-                  className="mt-2 h-20 rounded-lg object-cover"
-                />
+                <img src={mainPreview || form.image_url || ""} alt="" loading="lazy" className="mt-2 h-20 rounded-lg object-cover" />
               )}
             </Field>
 
@@ -350,26 +305,17 @@ const AdminEvents = () => {
                 value={form.youtube_url ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
               />
-              <p className="text-xs text-gray-400 mt-1">
-                Paste any YouTube link — the embed is handled automatically.
-              </p>
+              <p className="text-xs text-gray-400 mt-1">Paste any YouTube link — the embed is handled automatically.</p>
             </Field>
 
             {/* Gallery Images */}
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Gallery Images{" "}
-                  <span className="text-gray-400 font-normal">
-                    ({form.gallery_images.length}/5)
-                  </span>
+                  Gallery Images <span className="text-gray-400 font-normal">({form.gallery_images.length}/5)</span>
                 </label>
                 {form.gallery_images.length < 5 && (
-                  <button
-                    type="button"
-                    onClick={addGallerySlot}
-                    className="flex items-center gap-1 text-xs text-swamp font-medium hover:opacity-70"
-                  >
+                  <button type="button" onClick={addGallerySlot} className="flex items-center gap-1 text-xs text-swamp font-medium hover:opacity-70">
                     <Plus size={13} /> Add image
                   </button>
                 )}
@@ -377,30 +323,17 @@ const AdminEvents = () => {
 
               <div className="space-y-3">
                 {form.gallery_images.map((slot, i) => (
-                  <div
-                    key={i}
-                    className="border border-gray-200 rounded-xl p-3 space-y-2"
-                  >
+                  <div key={i} className="border border-gray-200 rounded-xl p-3 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-gray-500">
-                        Image {i + 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removeGallerySlot(i)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                      >
+                      <span className="text-xs font-medium text-gray-500">Image {i + 1} (max {MAX_EVENT_MB} MB)</span>
+                      <button type="button" onClick={() => removeGallerySlot(i)} className="text-gray-400 hover:text-red-500 transition-colors">
                         <X size={14} />
                       </button>
                     </div>
 
                     <div className="flex items-center gap-3">
                       {(slot.preview || slot.url) ? (
-                        <img
-                          src={slot.preview || slot.url}
-                          alt=""
-                          className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border border-gray-200"
-                        />
+                        <img src={slot.preview || slot.url} alt="" loading="lazy" className="w-14 h-14 rounded-lg object-cover flex-shrink-0 border border-gray-200" />
                       ) : (
                         <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
                           <Image size={20} className="text-gray-300" />
@@ -411,20 +344,16 @@ const AdminEvents = () => {
                         type="file"
                         accept="image/*"
                         className={`${inputClass} text-xs`}
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) handleGalleryFile(i, file);
-                        }}
+                        onChange={(e) => pickGalleryFile(i, e.target.files?.[0])}
                       />
                     </div>
+                    {slot.error && <p className="text-xs text-red-600">{slot.error}</p>}
 
                     <input
                       className={`${inputClass} text-xs`}
                       placeholder="Caption / description..."
                       value={slot.description}
-                      onChange={(e) =>
-                        updateGallerySlot(i, { description: e.target.value })
-                      }
+                      onChange={(e) => updateGallerySlot(i, { description: e.target.value })}
                     />
                   </div>
                 ))}
@@ -438,27 +367,15 @@ const AdminEvents = () => {
             </div>
 
             <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.is_featured}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, is_featured: e.target.checked }))
-                }
-              />
+              <input type="checkbox" checked={form.is_featured} onChange={(e) => setForm((f) => ({ ...f, is_featured: e.target.checked }))} />
               Feature this event on homepage (countdown timer)
             </label>
 
             {saveError && (
-              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
-                {saveError}
-              </p>
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{saveError}</p>
             )}
 
-            <ModalActions
-              onCancel={() => setModalOpen(false)}
-              saving={saving}
-              editing={!!editing}
-            />
+            <ModalActions onCancel={() => setModalOpen(false)} saving={saving} editing={!!editing} />
           </form>
         </Modal>
       )}
