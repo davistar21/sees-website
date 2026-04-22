@@ -26,14 +26,14 @@ const Header = () => {
         }`}
       >
         <div className="flex gap-4 items-center justify-between px-4 md:px-8">
-          <div className="w-[87px] h-[87px] flex-shrink-0">
+          <a href="/" className="w-[87px] h-[87px] flex-shrink-0 block">
             <img
               src="/sees-logo-black.png"
-              alt="logo"
+              alt="SEES Home"
               loading="eager"
               className="w-full h-full object-contain"
             />
-          </div>
+          </a>
 
           <nav className="hidden md:flex gap-8 items-center">
             {headerLinks.map((link, i) => (
@@ -64,7 +64,7 @@ const Header = () => {
             onClick={toggleMenu}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             className={`md:hidden flex items-center justify-center p-2 rounded-md  transition  ${
-              !isScrolled && onDarkHeroPage
+              !isScrolled && onDarkHeroPage && !menuOpen
                 ? "text-white hover:bg-swamp"
                 : "text-swamp hover:bg-gray-100"
             }`}

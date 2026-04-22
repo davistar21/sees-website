@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
-import { Mail, Trash2 } from "lucide-react";
+import { Mail, Trash2, Download } from "lucide-react";
 
 type Subscriber = {
   id: string;
@@ -33,9 +33,33 @@ const AdminNewsletter = () => {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold text-gray-900">Newsletter</h2>
-        <p className="text-sm text-gray-500">People subscribed via the homepage form</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">Newsletter</h2>
+          <p className="text-sm text-gray-500">People subscribed via the homepage form</p>
+        </div>
+        {subscribers.length > 0 && (
+          <button
+            onClick={() => {
+              const csv = [
+                "Email,Subscribed",
+                ...subscribers.map((s) =>
+                  `${s.email},${new Date(s.created_at).toLocaleDateString()}`
+                ),
+              ].join("\n");
+              const blob = new Blob([csv], { type: "text/csv" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `sees-subscribers-${new Date().toISOString().split("T")[0]}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }}
+            className="flex items-center gap-2 bg-swamp text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-[#02543d] transition-colors shrink-0"
+          >
+            <Download size={15} /> Export CSV
+          </button>
+        )}
       </div>
 
       {!loading && (

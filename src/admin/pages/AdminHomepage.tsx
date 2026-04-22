@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase, type HeroSlide, type Announcement } from "../../lib/supabase";
+import { supabase, type HeroSlide, type Announcement, type FeaturedVideo } from "../../lib/supabase";
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import {
   Field,
@@ -407,6 +407,239 @@ const Announcements = () => {
   );
 };
 
+// ─── Featured Video ───────────────────────────────────────────────────────────
+
+type VideoForm = Omit<FeaturedVideo, "id" | "created_at">;
+
+const blankVideo: VideoForm = {
+  title: "",
+  youtube_url: "",
+  description: "",
+  location: "",
+  event_date: "",
+  event_time: "",
+  active: true,
+};
+
+const FeaturedVideos = () => {
+  const [videos, setVideos] = useState<FeaturedVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<FeaturedVideo | null>(null);
+  const [form, setForm] = useState<VideoForm>(blankVideo);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+
+  const fetchVideos = async () => {
+    const { data } = await supabase
+      .from("featured_video")
+      .select("*")
+      .order("created_at", { ascending: false });
+    setVideos(data ?? []);
+    setLoading(false);
+  };
+
+  useEffect(() => { fetchVideos(); }, []);
+
+  const openCreate = () => {
+    setEditing(null);
+    setForm(blankVideo);
+    setSaveError("");
+    setModalOpen(true);
+  };
+
+  const openEdit = (v: FeaturedVideo) => {
+    setEditing(v);
+    setForm({
+      title: v.title,
+      youtube_url: v.youtube_url,
+      description: v.description ?? "",
+      location: v.location ?? "",
+      event_date: v.event_date ?? "",
+      event_time: v.event_time ?? "",
+      active: v.active,
+    });
+    setSaveError("");
+    setModalOpen(true);
+  };
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    setSaveError("");
+    const payload = {
+      title: form.title,
+      youtube_url: form.youtube_url,
+      description: form.description || null,
+      location: form.location || null,
+      event_date: form.event_date || null,
+      event_time: form.event_time || null,
+      active: form.active,
+    };
+    let dbError: string | null = null;
+    if (editing) {
+      const { error } = await supabase.from("featured_video").update(payload).eq("id", editing.id);
+      if (error) dbError = error.message;
+    } else {
+      const { error } = await supabase.from("featured_video").insert(payload);
+      if (error) dbError = error.message;
+    }
+    setSaving(false);
+    if (dbError) { setSaveError(dbError); return; }
+    setModalOpen(false);
+    fetchVideos();
+  };
+
+  const toggleActive = async (v: FeaturedVideo) => {
+    await supabase.from("featured_video").update({ active: !v.active }).eq("id", v.id);
+    fetchVideos();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Delete this featured video?")) return;
+    await supabase.from("featured_video").delete().eq("id", id);
+    fetchVideos();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold text-gray-800">Featured Video</h3>
+          <p className="text-xs text-gray-400">Shown on the Events page. Only active entries are displayed.</p>
+        </div>
+        <button
+          onClick={openCreate}
+          className="flex items-center gap-2 bg-swamp text-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-[#02543d] transition-colors"
+        >
+          <Plus size={15} /> Add Video
+        </button>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+        {loading ? (
+          <div className="p-6 text-center text-gray-400">Loading...</div>
+        ) : videos.length === 0 ? (
+          <div className="p-6 text-center text-gray-400">No featured videos yet.</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Title</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600 hidden sm:table-cell">Date</th>
+                <th className="text-left px-4 py-3 font-medium text-gray-600">Active</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {videos.map((v) => (
+                <tr key={v.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900 truncate max-w-[200px]">{v.title}</p>
+                    <p className="text-xs text-gray-400 truncate max-w-[200px]">{v.youtube_url}</p>
+                  </td>
+                  <td className="px-4 py-3 text-gray-500 hidden sm:table-cell">{v.event_date ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => toggleActive(v)}
+                      className={`transition-colors ${v.active ? "text-swamp" : "text-gray-300"}`}
+                    >
+                      {v.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
+                    </button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2 justify-end">
+                      <button onClick={() => openEdit(v)} className="p-1.5 text-gray-400 hover:text-swamp transition-colors">
+                        <Pencil size={15} />
+                      </button>
+                      <button onClick={() => handleDelete(v.id)} className="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {modalOpen && (
+        <Modal title={editing ? "Edit Featured Video" : "New Featured Video"} onClose={() => setModalOpen(false)}>
+          <form onSubmit={handleSave} className="space-y-4">
+            <Field label="Title" required>
+              <input
+                className={inputClass}
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                required
+                placeholder="e.g. SEES Annual General Meeting 2025"
+              />
+            </Field>
+            <Field label="YouTube URL" required>
+              <input
+                className={inputClass}
+                value={form.youtube_url}
+                onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
+                required
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+              <p className="text-xs text-gray-400 mt-1">Paste any YouTube link — the embed is handled automatically.</p>
+            </Field>
+            <Field label="Description">
+              <textarea
+                className={`${inputClass} resize-none`}
+                rows={3}
+                value={form.description ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                placeholder="Short description shown below the video..."
+              />
+            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Date">
+                <input
+                  type="date"
+                  className={inputClass}
+                  value={form.event_date ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, event_date: e.target.value }))}
+                />
+              </Field>
+              <Field label="Time">
+                <input
+                  type="time"
+                  className={inputClass}
+                  value={form.event_time ?? ""}
+                  onChange={(e) => setForm((f) => ({ ...f, event_time: e.target.value }))}
+                />
+              </Field>
+            </div>
+            <Field label="Location">
+              <input
+                className={inputClass}
+                value={form.location ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                placeholder="e.g. Main Auditorium"
+              />
+            </Field>
+            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.active}
+                onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
+              />
+              Show on Events page
+            </label>
+            {saveError && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{saveError}</p>
+            )}
+            <ModalActions onCancel={() => setModalOpen(false)} saving={saving} editing={!!editing} />
+          </form>
+        </Modal>
+      )}
+    </div>
+  );
+};
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const AdminHomepage = () => (
@@ -414,11 +647,12 @@ const AdminHomepage = () => (
     <div>
       <h2 className="text-xl font-bold text-gray-900">Homepage Content</h2>
       <p className="text-sm text-gray-500">
-        Manage hero slides and announcements shown on the homepage
+        Manage hero slides, announcements, and the featured video on the Events page
       </p>
     </div>
     <HeroSlides />
     <Announcements />
+    <FeaturedVideos />
   </div>
 );
 

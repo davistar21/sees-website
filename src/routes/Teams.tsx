@@ -9,25 +9,26 @@ export type Member = {
   description: string;
   image: string;
   portfolio: string;
+  whatsapp_url: string;
 };
 
+export type CarouselMember = { name: string; role: string; image: string };
+
 // ---------------------------------------------------------------------------
-// Auto-scrolling infinite carousel
+// Auto-scrolling infinite carousel (with name/role overlay)
 // ---------------------------------------------------------------------------
 
-export const Carousel = ({ images }: { images?: string[] }) => {
-  const defaultImages = [
+export const Carousel = ({ members }: { members?: CarouselMember[] }) => {
+  const defaultMembers: CarouselMember[] = [
     ...hardcodedDesigners,
     ...hardcodedDevelopers,
-  ].map((m) => m.image);
+  ].map((m) => ({ name: m.name, role: m.role, image: m.image }));
 
-  const src = images && images.length > 0 ? images : defaultImages;
-  // Duplicate so the marquee loops seamlessly
+  const src = members && members.length > 0 ? members : defaultMembers;
   const doubled = [...src, ...src];
 
   return (
     <div className="w-full overflow-hidden relative">
-      {/* Fade edges */}
       <div className="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
 
@@ -38,14 +39,23 @@ export const Carousel = ({ images }: { images?: string[] }) => {
           animation: "marquee-scroll 28s linear infinite",
         }}
       >
-        {doubled.map((image, idx) => (
-          <img
+        {doubled.map((member, idx) => (
+          <div
             key={idx}
-            src={image}
-            alt={`member-${idx}`}
-            loading="lazy"
-            className="w-[220px] h-[220px] object-cover rounded-2xl flex-shrink-0"
-          />
+            className="w-[220px] h-[220px] relative flex-shrink-0 rounded-2xl overflow-hidden"
+          >
+            <img
+              src={member.image}
+              alt={member.name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+              <p className="font-semibold text-sm leading-tight">{member.name}</p>
+              <p className="text-xs text-white/80">{member.role}</p>
+            </div>
+          </div>
         ))}
       </div>
     </div>
@@ -53,7 +63,7 @@ export const Carousel = ({ images }: { images?: string[] }) => {
 };
 
 // ---------------------------------------------------------------------------
-// Team member card (same layout as before)
+// Team member card
 // ---------------------------------------------------------------------------
 
 const TeamMemberCard = ({ member, index }: { member: Member; index: number }) => (
@@ -79,19 +89,27 @@ const TeamMemberCard = ({ member, index }: { member: Member; index: number }) =>
       <p className="text-gray-500 font-medium mb-3 text-base">{member.role}</p>
       <p className="text-gray-700 mb-6 text-xl">{member.description}</p>
       <div className="flex gap-4 mt-4 md:mt-auto justify-around md:justify-start">
-        <a
-          href={member.portfolio}
-          className="border border-swamp text-white font-semibold px-6 py-2 rounded-2xl bg-swamp hover:text-green-200 transition-all duration-300 flex gap-2 items-center"
-        >
-          <Link2 size={20} />
-          Portfolio
-        </a>
-        <a
-          href=""
-          className="border-2 border-swamp text-swamp font-semibold py-3 px-8 rounded-2xl hover:text-green-500 transition-all"
-        >
-          <PhoneForwarded size={20} />
-        </a>
+        {member.portfolio && member.portfolio !== "#" && (
+          <a
+            href={member.portfolio}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border border-swamp text-white font-semibold px-6 py-2 rounded-2xl bg-swamp hover:text-green-200 transition-all duration-300 flex gap-2 items-center"
+          >
+            <Link2 size={20} />
+            Portfolio
+          </a>
+        )}
+        {member.whatsapp_url && (
+          <a
+            href={member.whatsapp_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="border-2 border-swamp text-swamp font-semibold py-3 px-8 rounded-2xl hover:bg-swamp hover:text-white transition-all flex items-center gap-2"
+          >
+            <PhoneForwarded size={20} />
+          </a>
+        )}
       </div>
     </div>
   </motion.div>
@@ -130,7 +148,7 @@ export const TeamSection = ({ title, members }: TeamSectionProps) => (
 // Top section
 // ---------------------------------------------------------------------------
 
-const TopSection = ({ images }: { images?: string[] }) => (
+const TopSection = ({ members }: { members?: CarouselMember[] }) => (
   <div className="flex flex-col justify-between items-center md:pt-20 pb-16 px-6 md:px-16 mb-8 relative gap-8">
     <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-transparent to-white/30 z-10 pointer-events-none" />
     <div className="flex flex-col gap-1 items-center text-center">
@@ -143,13 +161,13 @@ const TopSection = ({ images }: { images?: string[] }) => (
         Electrical and Engineering Students website together.
       </p>
       <a
-        href="/contact"
+        href="mailto:theseesunilagofficial@gmail.com?subject=Inquiry%20from%20SEES%20Website&body=Hello%20SEES%20Team%2C%20I%20hope%20this%20message%20finds%20you%20well.%20My%20name%20is%20%5BYour%20Name%5D%2C%20and%20I%20am%20reaching%20out%20regarding%20%5Byour%20reason%5D.%20Please%20find%20the%20details%20of%20my%20inquiry%20below.%20I%20would%20appreciate%20your%20response%20at%20your%20earliest%20convenience.%20Thank%20you%20for%20your%20time%20and%20consideration.%20Best%20regards%2C%20%5BYour%20Name%5D."
         className="inline-block bg-swamp text-white font-semibold py-3 px-8 rounded-2xl hover:bg-[#02543d] transition-all"
       >
         Contact Us
       </a>
     </div>
-    <Carousel images={images} />
+    <Carousel members={members} />
   </div>
 );
 
@@ -163,16 +181,18 @@ const hardcodedDesigners: Member[] = [
     role: "UI/UX Designer",
     description:
       "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "6789d9097fc06f5b98c29b73ab472ff52652d2f8.png",
+    image: "tomi.jpg",
     portfolio: "#",
+    whatsapp_url: "",
   },
   {
     name: "Chinonso Victor",
     role: "Graphic Designer",
     description:
       "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "contentone.jpg",
+    image: "tomi.jpg",
     portfolio: "#",
+    whatsapp_url: "",
   },
 ];
 
@@ -182,16 +202,18 @@ const hardcodedDevelopers: Member[] = [
     role: "Frontend Developer",
     description:
       "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "contenttwo.jpg",
+    image: "tomi.jpg",
     portfolio: "#",
+    whatsapp_url: "",
   },
   {
     name: "Chinonso Victor",
     role: "Backend Developer",
     description:
       "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "hod.png",
+    image: "tomi.jpg",
     portfolio: "#",
+    whatsapp_url: "",
   },
 ];
 
@@ -206,14 +228,13 @@ type DBTeamMember = {
   description: string | null;
   image_url: string | null;
   portfolio: string;
+  whatsapp_url: string | null;
   category: string;
   display_order: number;
 };
 
 export default function Teams() {
-  const [groupedMembers, setGroupedMembers] = useState<
-    Record<string, Member[]>
-  >({});
+  const [groupedMembers, setGroupedMembers] = useState<Record<string, Member[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -233,6 +254,7 @@ export default function Teams() {
               description: m.description ?? "",
               image: m.image_url ?? "contentone.jpg",
               portfolio: m.portfolio || "#",
+              whatsapp_url: m.whatsapp_url ?? "",
             });
           });
           setGroupedMembers(groups);
@@ -242,11 +264,13 @@ export default function Teams() {
   }, []);
 
   const hasData = Object.keys(groupedMembers).length > 0;
-  const allImages = Object.values(groupedMembers).flat().map((m) => m.image);
+  const allCarouselMembers: CarouselMember[] = Object.values(groupedMembers)
+    .flat()
+    .map((m) => ({ name: m.name, role: m.role, image: m.image }));
 
   return (
     <main className="bg-gray-50 min-h-screen mt-20 md:mt-0 py-20">
-      <TopSection images={hasData ? allImages : undefined} />
+      <TopSection members={hasData ? allCarouselMembers : undefined} />
 
       {loading ? (
         <div className="flex justify-center py-20">

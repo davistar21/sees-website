@@ -6,7 +6,7 @@ const About = () => {
             <div className="about-head">About Sees</div>
 
             <div className="about-statement">
-                Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers who can solve the world's most pressing technological challenges. </div>
+                The Society of Electrical, Electronic, and Computer Engineering Students (SEES) is the official student body of the Department of Electrical and Electronics Engineering at the University of Lagos, focused on promoting academic excellence, technical growth, leadership, and collaboration. Through academic support and student-led initiatives, SEES provides opportunities for learning, innovation, and professional development, preparing engineers who are skilled, innovative, and impact-driven. </div>
         </div>
       </div>
     </div>

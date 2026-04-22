@@ -16,6 +16,7 @@ const blank: ExecForm = {
   description: "",
   image_url: "",
   portfolio: "#",
+  whatsapp_url: "",
   display_order: 0,
 };
 
@@ -29,7 +30,7 @@ const AdminExecutives = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState("");
 
-  const MAX_PHOTO_MB = 3;
+  const MAX_PHOTO_MB = 5;
   const pickPhoto = (file: File | undefined) => {
     if (!file) return;
     if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
@@ -68,6 +69,7 @@ const AdminExecutives = () => {
       description: exec.description ?? "",
       image_url: exec.image_url ?? "",
       portfolio: exec.portfolio,
+      whatsapp_url: exec.whatsapp_url ?? "",
       display_order: exec.display_order,
     });
     setImageFile(null);
@@ -239,6 +241,19 @@ const AdminExecutives = () => {
                 }
                 placeholder="https://"
               />
+            </Field>
+            <Field label="WhatsApp Link">
+              <input
+                className={inputClass}
+                value={form.whatsapp_url ?? ""}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, whatsapp_url: e.target.value }))
+                }
+                placeholder="https://wa.me/2348012345678"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Use the format: https://wa.me/ followed by the number in international format (no + or spaces).
+              </p>
             </Field>
             <Field label="Display Order">
               <input
