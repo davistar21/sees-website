@@ -178,7 +178,7 @@ const AdminEvents = () => {
   };
 
   const addGallerySlot = () => {
-    if (form.gallery_images.length >= 5) return;
+    if (form.gallery_images.length >= 15) return;
     setForm((f) => ({ ...f, gallery_images: [...f.gallery_images, { url: "", description: "" }] }));
   };
 
@@ -299,9 +299,9 @@ const AdminEvents = () => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="block text-sm font-medium text-gray-700">
-                  Gallery Images <span className="text-gray-400 font-normal">({form.gallery_images.length}/5)</span>
+                  Gallery Images <span className="text-gray-400 font-normal">({form.gallery_images.length}/15)</span>
                 </label>
-                {form.gallery_images.length < 5 && (
+                {form.gallery_images.length < 15 && (
                   <button type="button" onClick={addGallerySlot} className="flex items-center gap-1 text-xs text-swamp font-medium hover:opacity-70">
                     <Plus size={13} /> Add image
                   </button>
@@ -347,7 +347,7 @@ const AdminEvents = () => {
 
                 {form.gallery_images.length === 0 && (
                   <p className="text-xs text-gray-400 text-center py-3 border border-dashed border-gray-200 rounded-xl">
-                    No gallery images yet. Click "Add image" to upload up to 5.
+                    No gallery images yet. Click "Add image" to upload up to 15.
                   </p>
                 )}
               </div>
