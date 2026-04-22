@@ -9,7 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import { supabase, type DBEvent, type GalleryImage } from "../lib/supabase";
+import { supabase, type DBEvent, type GalleryImage, type FeaturedVideo } from "../lib/supabase";
 import ImageSlider from "../components/ImageSlider";
 
 // ---------------------------------------------------------------------------
@@ -36,6 +36,11 @@ const formatDate = (date: string | null): string => {
     month: "short",
     year: "numeric",
   });
+};
+
+const isPast = (date: string | null): boolean => {
+  if (!date) return false;
+  return new Date(date) < new Date(new Date().toDateString());
 };
 
 // ---------------------------------------------------------------------------
@@ -220,7 +225,7 @@ interface EventTabsProps {
 }
 
 const EventTabs = ({ tabs, activeTab, onTabClick }: EventTabsProps) => (
-  <div className="flex gap-4 bg-[#E0E0E087] p-2 md:px-6 md:py-4 w-full md:w-fit mx-auto my-12 rounded-xl">
+  <div className="flex flex-wrap gap-2 bg-[#E0E0E087] p-2 md:px-6 md:py-4 w-full md:w-fit mx-auto my-12 rounded-xl">
     {tabs.map((tab) => (
       <button
         key={tab}
@@ -270,13 +275,14 @@ const fallbackEvents: DBEvent[] = [
   },
 ];
 
+const TABS = ["Corporate events", "Sport events", "Fun events", "Past events"];
+
 const Events = () => {
   const [events, setEvents] = useState<DBEvent[]>([]);
   const [activeTab, setActiveTab] = useState("Corporate events");
   const [lightboxEvent, setLightboxEvent] = useState<DBEvent | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-
-  const tabs = ["Corporate events", "Sport events", "Fun events"];
+  const [featuredVideo, setFeaturedVideo] = useState<FeaturedVideo | null>(null);
 
   useEffect(() => {
     supabase
@@ -287,6 +293,17 @@ const Events = () => {
         if (data && data.length > 0) setEvents(data);
         else setEvents(fallbackEvents);
       });
+
+    supabase
+      .from("featured_video")
+      .select("*")
+      .eq("active", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single()
+      .then(({ data }) => {
+        if (data) setFeaturedVideo(data);
+      });
   }, []);
 
   const displayEvents = events.length > 0 ? events : fallbackEvents;
@@ -296,18 +313,18 @@ const Events = () => {
     .filter((e) => e.image_url)
     .map((e) => e.image_url as string);
 
-  // Featured video: first event with a youtube_url
-  const featuredVideo = displayEvents.find(
-    (e) => e.youtube_url && e.youtube_url.trim() !== ""
-  ) ?? null;
-
-  // Tab-filtered events
-  const filteredEvents = displayEvents.filter((e) => e.category === activeTab);
+  // Tab-filtered events: "Past events" shows all events with date before today
+  const filteredEvents =
+    activeTab === "Past events"
+      ? displayEvents.filter((e) => isPast(e.event_date))
+      : displayEvents.filter((e) => e.category === activeTab);
 
   const openLightbox = (event: DBEvent, index = 0) => {
     setLightboxEvent(event);
     setLightboxIndex(index);
   };
+
+  const videoId = featuredVideo ? extractYouTubeId(featuredVideo.youtube_url) : null;
 
   return (
     <div className="mx-auto w-full pb-8">
@@ -328,34 +345,31 @@ const Events = () => {
 
       {/* Featured video section */}
       {featuredVideo && (
-        <div className="lg:w-[80%] md:w-[90%] w-[95%] rounded-2xl overflow-hidden my-16 mx-auto">
-          <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
-            {extractYouTubeId(featuredVideo.youtube_url!) ? (
+        <div className="lg:w-[80%] md:w-[90%] w-[95%] my-16 mx-auto">
+          {/* Video — rounded top only; description box provides bottom rounding */}
+          <div className="relative w-full rounded-t-2xl overflow-hidden" style={{ paddingTop: "56.25%" }}>
+            {videoId ? (
               <iframe
-                className="absolute inset-0 w-full h-full rounded-2xl"
-                src={`https://www.youtube.com/embed/${extractYouTubeId(featuredVideo.youtube_url!)}?rel=0`}
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                 title={featuredVideo.title}
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
               />
             ) : (
-              /* Fallback: thumbnail with play button */
-              <div className="absolute inset-0 rounded-2xl overflow-hidden">
-                {featuredVideo.image_url && (
-                  <img
-                    src={featuredVideo.image_url}
-                    alt={featuredVideo.title}
-                    className="w-full h-full object-cover"
-                  />
-                )}
+              <div className="absolute inset-0 overflow-hidden">
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <Play className="fill-current text-white" size={56} />
                 </div>
               </div>
             )}
           </div>
+          {/* Description — flush against video, rounded bottom */}
           <div className="bg-[#013f31] rounded-b-2xl px-6 py-4 text-white">
             <h2 className="text-xl md:text-2xl font-semibold">{featuredVideo.title}</h2>
+            {featuredVideo.description && (
+              <p className="text-white/70 text-sm mt-1">{featuredVideo.description}</p>
+            )}
             <div className="flex gap-4 md:gap-6 flex-wrap text-[#95fde2] text-sm mt-2">
               {featuredVideo.location && (
                 <span className="flex gap-1 items-center">
@@ -378,7 +392,7 @@ const Events = () => {
       )}
 
       {/* Category tabs */}
-      <EventTabs tabs={tabs} activeTab={activeTab} onTabClick={setActiveTab} />
+      <EventTabs tabs={TABS} activeTab={activeTab} onTabClick={setActiveTab} />
 
       {/* Event cards */}
       <div className="flex flex-col gap-12 max-w-7xl px-4 md:px-8 mx-auto">

@@ -23,7 +23,7 @@ type GallerySlot = {
   error?: string;
 };
 
-type EventForm = Omit<DBEvent, "id" | "created_at" | "gallery_images"> & {
+type EventForm = Omit<DBEvent, "id" | "created_at" | "gallery_images" | "youtube_url"> & {
   gallery_images: GallerySlot[];
 };
 
@@ -36,7 +36,6 @@ const blank: EventForm = {
   event_date: "",
   category: "Corporate events",
   is_featured: false,
-  youtube_url: "",
   gallery_images: [],
 };
 
@@ -89,7 +88,6 @@ const AdminEvents = () => {
       event_date: event.event_date ?? "",
       category: event.category,
       is_featured: event.is_featured,
-      youtube_url: event.youtube_url ?? "",
       gallery_images: slots,
     });
     setMainImageFile(null);
@@ -155,7 +153,6 @@ const AdminEvents = () => {
       event_date: form.event_date,
       category: form.category,
       is_featured: form.is_featured,
-      youtube_url: form.youtube_url || null,
       gallery_images,
     };
 
@@ -296,16 +293,6 @@ const AdminEvents = () => {
               {(mainPreview || form.image_url) && (
                 <img src={mainPreview || form.image_url || ""} alt="" loading="lazy" className="mt-2 h-20 rounded-lg object-cover" />
               )}
-            </Field>
-
-            <Field label="YouTube URL (for featured video stream)">
-              <input
-                className={inputClass}
-                placeholder="https://www.youtube.com/watch?v=..."
-                value={form.youtube_url ?? ""}
-                onChange={(e) => setForm((f) => ({ ...f, youtube_url: e.target.value }))}
-              />
-              <p className="text-xs text-gray-400 mt-1">Paste any YouTube link — the embed is handled automatically.</p>
             </Field>
 
             {/* Gallery Images */}

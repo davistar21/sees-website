@@ -15,6 +15,7 @@ type TeamMember = {
   description: string | null;
   image_url: string | null;
   portfolio: string;
+  whatsapp_url: string | null;
   category: string;
   display_order: number;
   created_at: string;
@@ -28,6 +29,7 @@ const blank: MemberForm = {
   description: "",
   image_url: "",
   portfolio: "#",
+  whatsapp_url: "",
   category: "",
   display_order: 0,
 };
@@ -44,7 +46,7 @@ const AdminTeams = () => {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState("");
 
-  const MAX_PHOTO_MB = 3;
+  const MAX_PHOTO_MB = 5;
   const pickPhoto = (file: File | undefined) => {
     if (!file) return;
     if (file.size > MAX_PHOTO_MB * 1024 * 1024) {
@@ -90,6 +92,7 @@ const AdminTeams = () => {
       description: m.description ?? "",
       image_url: m.image_url ?? "",
       portfolio: m.portfolio,
+      whatsapp_url: m.whatsapp_url ?? "",
       category: m.category,
       display_order: m.display_order,
     });
@@ -285,6 +288,18 @@ const AdminTeams = () => {
                 value={form.portfolio}
                 onChange={(e) => setForm((f) => ({ ...f, portfolio: e.target.value }))}
               />
+            </Field>
+
+            <Field label="WhatsApp Link">
+              <input
+                className={inputClass}
+                placeholder="https://wa.me/2348012345678"
+                value={form.whatsapp_url ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, whatsapp_url: e.target.value }))}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                Use the format: https://wa.me/ followed by the number in international format (no + or spaces).
+              </p>
             </Field>
 
             <Field label="Display Order">

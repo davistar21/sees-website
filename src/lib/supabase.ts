@@ -36,6 +36,7 @@ export type Executive = {
   description: string | null
   image_url: string | null
   portfolio: string
+  whatsapp_url: string | null
   display_order: number
   created_at: string
 }
@@ -74,5 +75,32 @@ export type HodProfile = {
   bio: string | null
   image_url: string | null
   contact_email: string | null
+  created_at: string
+}
+
+export type FeaturedVideo = {
+  id: string
+  title: string
+  youtube_url: string
+  description: string | null
+  location: string | null
+  event_date: string | null
+  event_time: string | null
+  active: boolean
+  created_at: string
+}
+
+export type SpotlightPerson = {
+  id: string
+  name: string
+  role: string
+  category: string
+  image_url: string | null
+  quote: string | null
+  bio: string | null
+  linkedin_url: string | null
+  instagram_url: string | null
+  display_order: number
+  active: boolean
   created_at: string
 }

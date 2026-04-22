@@ -13,6 +13,7 @@ import {
   Newspaper,
   UserSquare2,
   UsersRound,
+  Star,
 } from "lucide-react";
 
 const navItems = [
@@ -20,6 +21,7 @@ const navItems = [
   { label: "Events", href: "/admin/events", icon: CalendarDays },
   { label: "Executives", href: "/admin/executives", icon: Users },
   { label: "Teams", href: "/admin/teams", icon: UsersRound },
+  { label: "Spotlight", href: "/admin/spotlight", icon: Star },
   { label: "HOD", href: "/admin/hod", icon: UserSquare2 },
   { label: "Resources", href: "/admin/resources", icon: BookOpen },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },

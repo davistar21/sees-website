@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import "./styles/homepage.css";
 import Vision from "./components/Vision";
@@ -7,9 +7,9 @@ import Resources from "./routes/Resources";
 import ContentCard from "./components/ContentCard";
 import Hod from "./components/Hod";
 import Newsletter from "./components/Newsletter";
-import { supabase, type HeroSlide, type Announcement } from "./lib/supabase";
+import { supabase, type HeroSlide, type Announcement, type SpotlightPerson } from "./lib/supabase";
 import { Link } from "react-router-dom";
-import { ArrowRight, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Announcement banner
@@ -23,43 +23,231 @@ const AnnouncementBanner = ({ items }: { items: Announcement[] }) => {
   const current = items[idx];
 
   return (
-    <div className="fixed top-[70px] md:top-[87px] left-0 right-0 z-40 bg-swamp text-white px-4 py-2 flex items-center gap-3 shadow-md">
-      {items.length > 1 && (
-        <button
-          onClick={() => setIdx((i) => (i === 0 ? items.length - 1 : i - 1))}
-          className="shrink-0 hover:opacity-70 transition-opacity"
-        >
-          <ChevronLeft size={16} />
-        </button>
-      )}
-
-      <p className="flex-1 text-center text-sm min-w-0 truncate">
-        <span className="font-semibold">{current.title}</span>
-        {current.content && (
-          <span className="text-white/80 ml-2 hidden sm:inline">{current.content}</span>
+    // top-[87px] on all screens — matches header height (87×87 logo)
+    <div className="fixed top-[87px] left-0 right-0 z-40 bg-swamp text-white shadow-md">
+      <div className="flex items-start gap-2 px-3 py-2.5">
+        {items.length > 1 && (
+          <button
+            onClick={() => setIdx((i) => (i === 0 ? items.length - 1 : i - 1))}
+            className="shrink-0 hover:opacity-70 transition-opacity p-0.5 mt-0.5"
+            aria-label="Previous"
+          >
+            <ChevronLeft size={16} />
+          </button>
         )}
-      </p>
 
-      {items.length > 1 && (
+        <p className="flex-1 text-center text-sm min-w-0">
+          <span className="font-semibold">{current.title}</span>
+          {current.content && (
+            <span className="text-white/80 ml-1.5">— {current.content}</span>
+          )}
+        </p>
+
+        {items.length > 1 && (
+          <button
+            onClick={() => setIdx((i) => (i === items.length - 1 ? 0 : i + 1))}
+            className="shrink-0 hover:opacity-70 transition-opacity p-0.5 mt-0.5"
+            aria-label="Next"
+          >
+            <ChevronRight size={16} />
+          </button>
+        )}
+        {items.length > 1 && (
+          <span className="text-white/50 text-xs shrink-0 mt-0.5">{idx + 1}/{items.length}</span>
+        )}
+
         <button
-          onClick={() => setIdx((i) => (i === items.length - 1 ? 0 : i + 1))}
-          className="shrink-0 hover:opacity-70 transition-opacity"
+          onClick={() => setDismissed(true)}
+          className="shrink-0 hover:opacity-70 transition-opacity ml-1 p-0.5 mt-0.5"
+          aria-label="Dismiss announcement"
         >
-          <ChevronRight size={16} />
+          <X size={16} />
         </button>
-      )}
-      {items.length > 1 && (
-        <span className="text-white/50 text-xs shrink-0">{idx + 1}/{items.length}</span>
-      )}
-
-      <button
-        onClick={() => setDismissed(true)}
-        className="shrink-0 hover:opacity-70 transition-opacity ml-1"
-        aria-label="Dismiss announcement"
-      >
-        <X size={16} />
-      </button>
+      </div>
     </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Spotlight modal
+// ---------------------------------------------------------------------------
+const SpotlightModal = ({ person, onClose }: { person: SpotlightPerson; onClose: () => void }) => {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {person.image_url && (
+          <div className="w-full h-48 relative overflow-hidden">
+            <img
+              src={person.image_url}
+              alt={person.name}
+              loading="lazy"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-4 left-4 text-white">
+              <h3 className="text-xl font-bold">{person.name}</h3>
+              <p className="text-sm text-white/80">{person.role}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="absolute top-3 right-3 bg-black/40 text-white rounded-full p-1.5 hover:bg-black/60 transition-colors"
+              aria-label="Close"
+            >
+              <X size={16} />
+            </button>
+          </div>
+        )}
+
+        <div className="p-5 space-y-3">
+          {!person.image_url && (
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{person.name}</h3>
+                <p className="text-sm text-swamp font-medium">{person.role}</p>
+              </div>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+          )}
+
+          <span className="inline-block bg-[#36CE8A26] text-swamp text-xs font-semibold px-3 py-1 rounded-full">
+            {person.category}
+          </span>
+
+          {person.quote && (
+            <blockquote className="border-l-4 border-swamp pl-4 italic text-gray-600 text-sm">
+              "{person.quote}"
+            </blockquote>
+          )}
+
+          {person.bio && (
+            <p className="text-gray-700 text-sm leading-relaxed">{person.bio}</p>
+          )}
+
+          {(person.linkedin_url || person.instagram_url) && (
+            <div className="flex gap-3 pt-1">
+              {person.linkedin_url && (
+                <a
+                  href={person.linkedin_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm text-swamp font-medium hover:opacity-70 transition-opacity"
+                >
+                  <ExternalLink size={14} /> LinkedIn
+                </a>
+              )}
+              {person.instagram_url && (
+                <a
+                  href={person.instagram_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-sm text-swamp font-medium hover:opacity-70 transition-opacity"
+                >
+                  <ExternalLink size={14} /> Instagram
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// Spotlight section
+// ---------------------------------------------------------------------------
+const SpotlightSection = () => {
+  const [people, setPeople] = useState<SpotlightPerson[]>([]);
+  const [selected, setSelected] = useState<SpotlightPerson | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("spotlight")
+      .select("*")
+      .eq("active", true)
+      .order("display_order", { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 0) setPeople(data);
+      });
+  }, []);
+
+  if (people.length === 0) return null;
+
+  const doubled = [...people, ...people];
+
+  return (
+    <section className="py-16 bg-white overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 mb-10 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold text-swamp">Alumni &amp; Student Spotlight</h2>
+        <p className="text-gray-500 mt-2 text-base max-w-xl mx-auto">
+          Celebrating the achievements and stories of our outstanding members
+        </p>
+      </div>
+
+      <div className="relative w-full overflow-hidden">
+        <div className="absolute left-0 top-0 h-full w-20 bg-gradient-to-r from-white to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 h-full w-20 bg-gradient-to-l from-white to-transparent z-10 pointer-events-none" />
+
+        <div
+          className="flex gap-5"
+          style={{ width: "max-content", animation: "marquee-scroll 40s linear infinite" }}
+        >
+          {doubled.map((person, i) => (
+            <button
+              key={i}
+              onClick={() => setSelected(person)}
+              className="w-[240px] flex-shrink-0 text-left group focus:outline-none"
+            >
+              <div className="relative w-full h-[300px] rounded-2xl overflow-hidden">
+                {person.image_url ? (
+                  <img
+                    src={person.image_url}
+                    alt={person.name}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#013f31]/10 flex items-center justify-center">
+                    <span className="text-4xl text-swamp font-bold">{person.name.charAt(0)}</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                  <p className="font-semibold text-base leading-tight">{person.name}</p>
+                  <p className="text-xs text-white/80 mt-0.5">{person.role}</p>
+                  {person.quote && (
+                    <p className="text-xs text-white/70 mt-1.5 line-clamp-2 italic">"{person.quote}"</p>
+                  )}
+                </div>
+                <div className="absolute top-3 right-3">
+                  <span className="text-[10px] font-semibold bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full">
+                    {person.category}
+                  </span>
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {selected && (
+        <SpotlightModal person={selected} onClose={() => setSelected(null)} />
+      )}
+    </section>
   );
 };
 
@@ -95,7 +283,7 @@ const fallbackSlides: HeroSlide[] = [
     id: "2",
     image_url: "/bg-two.JPG",
     title: "Student Debate Competition",
-    subtitle: "Theme: Learning Reimagined: AI and the the Future of Education",
+    subtitle: "Theme: Learning Reimagined: AI and the Future of Education",
     display_order: 1,
     active: true,
     created_at: "",
@@ -104,7 +292,7 @@ const fallbackSlides: HeroSlide[] = [
     id: "3",
     image_url: "/bg-three.jpg",
     title: "Student Food Drive",
-    subtitle: "heme: Learning Reimagined: AI and the the Future of Education",
+    subtitle: "Theme: Learning Reimagined: AI and the Future of Education",
     display_order: 2,
     active: true,
     created_at: "",
@@ -128,15 +316,12 @@ const calcTimeLeft = (target: string): TimeLeft => {
 // ---------------------------------------------------------------------------
 const App = () => {
   const [slides, setSlides] = useState<HeroSlide[]>(fallbackSlides);
+  const [currentSlide, setCurrentSlide] = useState<HeroSlide>(fallbackSlides[0]);
   const [posts, setPosts] = useState<BlogPreview[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [countdownTarget, setCountdownTarget] = useState<string | null>(null);
+  const [countdownLabel, setCountdownLabel] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, mins: 0 });
-
-  const mainRef = useRef<HTMLDivElement | null>(null);
-  const mainContentRef = useRef<HTMLDivElement | null>(null);
-  const sideContentRef = useRef<HTMLDivElement | null>(null);
-  const currentIndex = useRef(0);
 
   useEffect(() => {
     supabase
@@ -169,7 +354,7 @@ const App = () => {
 
     supabase
       .from("events")
-      .select("event_date, event_time")
+      .select("title, event_date, event_time")
       .eq("is_featured", true)
       .gte("event_date", new Date().toISOString().split("T")[0])
       .order("event_date", { ascending: true })
@@ -178,42 +363,30 @@ const App = () => {
         if (data && data[0]?.event_date) {
           const time = data[0].event_time ?? "00:00";
           setCountdownTarget(`${data[0].event_date}T${time}`);
+          setCountdownLabel(data[0].title ?? null);
         }
       });
   }, []);
 
+  // Slide rotation
+  useEffect(() => {
+    if (slides.length === 0) return;
+    let idx = 0;
+    setCurrentSlide(slides[0]);
+    const interval = setInterval(() => {
+      idx = idx === slides.length - 1 ? 0 : idx + 1;
+      setCurrentSlide(slides[idx]);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [slides]);
+
+  // Countdown timer
   useEffect(() => {
     if (!countdownTarget) return;
     setTimeLeft(calcTimeLeft(countdownTarget));
     const timer = setInterval(() => setTimeLeft(calcTimeLeft(countdownTarget)), 1000);
     return () => clearInterval(timer);
   }, [countdownTarget]);
-
-  useEffect(() => {
-    if (slides.length === 0) return;
-    currentIndex.current = 0;
-
-    const transition = () => {
-      const slide = slides[currentIndex.current];
-      if (mainRef.current) {
-        mainRef.current.style.backgroundImage = `url(${slide.image_url})`;
-      }
-      if (mainContentRef.current) {
-        mainContentRef.current.innerHTML = slide.title;
-      }
-      if (sideContentRef.current) {
-        sideContentRef.current.innerHTML = slide.subtitle ?? "";
-      }
-      currentIndex.current =
-        currentIndex.current === slides.length - 1
-          ? 0
-          : currentIndex.current + 1;
-    };
-
-    transition();
-    const interval = setInterval(transition, 5000);
-    return () => clearInterval(interval);
-  }, [slides]);
 
   const fallbackPosts: BlogPreview[] = [
     { id: "", title: "The Fall", content: "It was the sign out of 2025 when Sunmisola Ganikale saw a bright light in the distance and knew things would never be the same again for the students.", image_url: "/contenttwo.jpg" },
@@ -227,29 +400,44 @@ const App = () => {
     <div className="all-contents">
       <AnnouncementBanner items={announcements} />
 
-      <div className="main pt-[70px] md:pt-[87px]" ref={mainRef}>
-        <div className="overlay"></div>
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      <div
+        className="main"
+        style={{ backgroundImage: `url(${currentSlide.image_url})` }}
+      >
+        <div className="overlay" />
 
-        <div className="rest">
-          <div className="welcome-texts">
-            <div className="main-content" ref={mainContentRef} />
-            <div className="side-text" ref={sideContentRef} />
+        {/* Content — absolutely fills the hero, centers text like Events page */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 gap-5 md:gap-8" style={{ zIndex: 2 }}>
+          <h1 className="text-3xl sm:text-5xl md:text-[64px] font-bold text-white leading-tight max-w-4xl">
+            {currentSlide.title}
+          </h1>
+          {currentSlide.subtitle && (
+            <p className="text-base sm:text-lg md:text-[24px] font-semibold text-white/90 max-w-3xl">
+              {currentSlide.subtitle}
+            </p>
+          )}
 
-            <div className="countdown">
-              <div className="time-box">
-                <div className="number">{String(timeLeft.days).padStart(2, "0")}</div>
-                <div className="label">Days</div>
-              </div>
-              <span className="colon">:</span>
-              <div className="time-box">
-                <div className="number">{String(timeLeft.hours).padStart(2, "0")}</div>
-                <div className="label">Hours</div>
-              </div>
-              <span className="colon">:</span>
-              <div className="time-box">
-                <div className="number">{String(timeLeft.mins).padStart(2, "0")}</div>
-                <div className="label">Mins</div>
-              </div>
+          {/* Countdown */}
+          {countdownLabel && (
+            <p className="text-white/70 text-xs sm:text-sm font-medium tracking-widest uppercase -mb-3">
+              Counting down to — {countdownLabel}
+            </p>
+          )}
+          <div className="countdown">
+            <div className="time-box">
+              <div className="number">{String(timeLeft.days).padStart(2, "0")}</div>
+              <div className="label">Days</div>
+            </div>
+            <span className="colon">:</span>
+            <div className="time-box">
+              <div className="number">{String(timeLeft.hours).padStart(2, "0")}</div>
+              <div className="label">Hours</div>
+            </div>
+            <span className="colon">:</span>
+            <div className="time-box">
+              <div className="number">{String(timeLeft.mins).padStart(2, "0")}</div>
+              <div className="label">Mins</div>
             </div>
           </div>
         </div>
@@ -258,6 +446,7 @@ const App = () => {
       <Vision />
       <About />
 
+      {/* ── Blog posts ───────────────────────────────────────────────────── */}
       <div className="w-full bg-white py-12 px-4">
         <div className="max-w-[1400px] mx-auto">
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
@@ -286,6 +475,7 @@ const App = () => {
       </div>
 
       <Resources />
+      <SpotlightSection />
       <Hod />
       <Newsletter />
     </div>

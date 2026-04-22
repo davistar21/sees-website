@@ -1,27 +1,34 @@
 import { useEffect, useState } from "react";
-import { Carousel, TeamSection, type Member } from "./Teams";
+import { Carousel, TeamSection, type Member, type CarouselMember } from "./Teams";
 import { supabase, type Executive } from "../lib/supabase";
 
-const TopSection = ({ members }: { members: Member[] }) => (
-  <div className="flex flex-col justify-between items-center md:pt-20 pb-16 px-6 md:px-16 mb-8 relative gap-8">
-    <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-transparent to-white/30 z-10 pointer-events-none" />
-    <div className="flex flex-col gap-1 items-center text-center">
-      <h1 className="text-3xl md:text-5xl font-bold text-swamp mb-4">
-        Meet the Executives
-      </h1>
-      <p className="max-w-2xl mx-auto text-gray-600 text-lg mb-8">
-        The executives of the Society of Electrical Engineering Students
-      </p>
-      <a
-        href="/contact"
-        className="inline-block bg-swamp text-white font-semibold py-3 px-8 rounded-2xl hover:bg-[#02543d] transition-all"
-      >
-        Contact Us
-      </a>
+const TopSection = ({ members }: { members: Member[] }) => {
+  const carouselMembers: CarouselMember[] = members.map((m) => ({
+    name: m.name,
+    role: m.role,
+    image: m.image,
+  }));
+  return (
+    <div className="flex flex-col justify-between items-center md:pt-20 pb-16 px-6 md:px-16 mb-8 relative gap-8">
+      <div className="hidden md:block absolute inset-0 bg-gradient-to-r from-transparent to-white/30 z-10 pointer-events-none" />
+      <div className="flex flex-col gap-1 items-center text-center">
+        <h1 className="text-3xl md:text-5xl font-bold text-swamp mb-4">
+          Meet the Executives
+        </h1>
+        <p className="max-w-2xl mx-auto text-gray-600 text-lg mb-8">
+          The executives of the Society of Electrical Engineering Students
+        </p>
+        <a
+          href="mailto:theseesunilagofficial@gmail.com?subject=Inquiry%20from%20SEES%20Website&body=Hello%20SEES%20Team%2C%20I%20hope%20this%20message%20finds%20you%20well.%20My%20name%20is%20%5BYour%20Name%5D%2C%20and%20I%20am%20reaching%20out%20regarding%20%5Byour%20reason%5D.%20Please%20find%20the%20details%20of%20my%20inquiry%20below.%20I%20would%20appreciate%20your%20response%20at%20your%20earliest%20convenience.%20Thank%20you%20for%20your%20time%20and%20consideration.%20Best%20regards%2C%20%5BYour%20Name%5D."
+          className="inline-block bg-swamp text-white font-semibold py-3 px-8 rounded-2xl hover:bg-[#02543d] transition-all"
+        >
+          Contact Us
+        </a>
+      </div>
+      <Carousel members={carouselMembers.length > 0 ? carouselMembers : undefined} />
     </div>
-    <Carousel images={members.map((m) => m.image).filter(Boolean)} />
-  </div>
-);
+  );
+};
 
 const execToMember = (exec: Executive): Member => ({
   name: exec.name,
@@ -29,6 +36,7 @@ const execToMember = (exec: Executive): Member => ({
   description: exec.description ?? "",
   image: exec.image_url ?? "contenttwo.jpg",
   portfolio: exec.portfolio || "#",
+  whatsapp_url: exec.whatsapp_url ?? "",
 });
 
 const Executives = () => {
