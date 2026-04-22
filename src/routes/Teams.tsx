@@ -29,14 +29,14 @@ export const Carousel = ({ members }: { members?: CarouselMember[] }) => {
 
   return (
     <div className="w-full overflow-hidden relative">
-      <div className="absolute left-0 top-0 h-full w-16 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 h-full w-16 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
+      <div className="absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
+      <div className="absolute right-0 top-0 h-full w-6 bg-gradient-to-l from-gray-50 to-transparent z-10 pointer-events-none" />
 
       <div
-        className="flex gap-3"
+        className="marquee-track flex gap-3"
         style={{
           width: "max-content",
-          animation: "marquee-scroll 28s linear infinite",
+          animation: "marquee-scroll 18s linear infinite",
         }}
       >
         {doubled.map((member, idx) => (
@@ -80,7 +80,7 @@ const TeamMemberCard = ({ member, index }: { member: Member; index: number }) =>
         src={member.image}
         alt={member.name}
         loading="lazy"
-        className="object-cover w-full h-full"
+        className="object-cover object-top w-full h-full"
       />
     </div>
 

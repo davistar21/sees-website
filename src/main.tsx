@@ -30,6 +30,7 @@ const AdminNewsletter = lazy(() => import("./admin/pages/AdminNewsletter.tsx"));
 const AdminBlog      = lazy(() => import("./admin/pages/AdminBlog.tsx"));
 const AdminHod       = lazy(() => import("./admin/pages/AdminHod.tsx"));
 const AdminSpotlight = lazy(() => import("./admin/pages/AdminSpotlight.tsx"));
+const Register       = lazy(() => import("./admin/pages/Register.tsx"));
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
@@ -69,6 +70,7 @@ const router = createBrowserRouter([
     element: <AdminLayout />,
     children: [
       { path: "login",       element: <S><Login /></S> },
+      { path: "register",    element: <S><Register /></S> },
       { path: "dashboard",   element: <ProtectedRoute><S><Dashboard /></S></ProtectedRoute> },
       { path: "events",      element: <ProtectedRoute><S><AdminEvents /></S></ProtectedRoute> },
       { path: "executives",  element: <ProtectedRoute><S><AdminExecutives /></S></ProtectedRoute> },
