@@ -269,36 +269,6 @@ const getExcerpt = (content: string | null) => {
   return content.slice(0, 100) + (content.length > 100 ? "..." : "");
 };
 
-const fallbackSlides: HeroSlide[] = [
-  {
-    id: "1",
-    image_url: "/bg-one.jpg",
-    title: "SEES HOD GAMES 2026",
-    subtitle: "Theme: Legacy of Excellence",
-    display_order: 0,
-    active: true,
-    created_at: "",
-  },
-  {
-    id: "2",
-    image_url: "/bg-two.JPG",
-    title: "Student Debate Competition",
-    subtitle: "Theme: Learning Reimagined: AI and the Future of Education",
-    display_order: 1,
-    active: true,
-    created_at: "",
-  },
-  {
-    id: "3",
-    image_url: "/bg-three.jpg",
-    title: "Student Food Drive",
-    subtitle: "Theme: Learning Reimagined: AI and the Future of Education",
-    display_order: 2,
-    active: true,
-    created_at: "",
-  },
-];
-
 type TimeLeft = { days: number; hours: number; mins: number };
 
 const calcTimeLeft = (target: string): TimeLeft => {
@@ -315,8 +285,8 @@ const calcTimeLeft = (target: string): TimeLeft => {
 // App
 // ---------------------------------------------------------------------------
 const App = () => {
-  const [slides, setSlides] = useState<HeroSlide[]>(fallbackSlides);
-  const [currentSlide, setCurrentSlide] = useState<HeroSlide>(fallbackSlides[0]);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [currentSlide, setCurrentSlide] = useState<HeroSlide | null>(null);
   const [posts, setPosts] = useState<BlogPreview[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [countdownTarget, setCountdownTarget] = useState<string | null>(null);
@@ -388,14 +358,6 @@ const App = () => {
     return () => clearInterval(timer);
   }, [countdownTarget]);
 
-  const fallbackPosts: BlogPreview[] = [
-    { id: "", title: "The Fall", content: "It was the sign out of 2025 when Sunmisola Ganikale saw a bright light in the distance and knew things would never be the same again for the students.", image_url: "/contenttwo.jpg" },
-    { id: "", title: "Rising Up", content: "The engineering students gathered at dawn, ready to face the challenges that lay ahead in the new academic session with determination.", image_url: "/contentone.jpg" },
-    { id: "", title: "The Future", content: "Technology and innovation drive the new generation of electrical engineers who are determined to solve Africa's most pressing challenges.", image_url: "/contenttwo.jpg" },
-  ];
-
-  const displayPosts = posts.length > 0 ? posts : fallbackPosts;
-
   return (
     <div className="all-contents">
       <AnnouncementBanner items={announcements} />
@@ -403,19 +365,25 @@ const App = () => {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <div
         className="main"
-        style={{ backgroundImage: `url(${currentSlide.image_url})` }}
+        style={{ backgroundImage: currentSlide ? `url(${currentSlide.image_url})` : undefined }}
       >
         <div className="overlay" />
 
         {/* Content — absolutely fills the hero, centers text like Events page */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 gap-5 md:gap-8" style={{ zIndex: 2 }}>
-          <h1 className="text-3xl sm:text-5xl md:text-[64px] font-bold text-white leading-tight max-w-4xl">
-            {currentSlide.title}
-          </h1>
-          {currentSlide.subtitle && (
-            <p className="text-base sm:text-lg md:text-[24px] font-semibold text-white/90 max-w-3xl">
-              {currentSlide.subtitle}
-            </p>
+          {currentSlide ? (
+            <>
+              <h1 className="text-3xl sm:text-5xl md:text-[64px] font-bold text-white leading-tight max-w-4xl">
+                {currentSlide.title}
+              </h1>
+              {currentSlide.subtitle && (
+                <p className="text-base sm:text-lg md:text-[24px] font-semibold text-white/90 max-w-3xl">
+                  {currentSlide.subtitle}
+                </p>
+              )}
+            </>
+          ) : (
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
           )}
 
           {/* Countdown */}
@@ -446,33 +414,35 @@ const App = () => {
       <Vision />
       <About />
 
-      {/* ── Blog posts ───────────────────────────────────────────────────── */}
-      <div className="w-full bg-white py-12 px-4">
-        <div className="max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
-            {displayPosts.map((post, i) => (
-              <ContentCard
-                key={post.id || i}
-                id={post.id}
-                img={post.image_url ?? "/contentone.jpg"}
-                title={post.title}
-                excerpt={getExcerpt(post.content)}
-                readTime={getReadTime(post.content)}
-              />
-            ))}
-          </div>
+      {/* ── Blog posts — only shown when posts exist ─────────────────────── */}
+      {posts.length > 0 && (
+        <div className="w-full bg-white py-12 px-4">
+          <div className="max-w-[1400px] mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-center">
+              {posts.map((post, i) => (
+                <ContentCard
+                  key={post.id || i}
+                  id={post.id}
+                  img={post.image_url ?? "/contentone.jpg"}
+                  title={post.title}
+                  excerpt={getExcerpt(post.content)}
+                  readTime={getReadTime(post.content)}
+                />
+              ))}
+            </div>
 
-          <div className="flex justify-center mt-10">
-            <Link
-              to="/blog"
-              className="flex items-center gap-2 py-3 px-8 rounded-2xl font-semibold transition-opacity hover:opacity-80"
-              style={{ backgroundColor: "#013f31", color: "#95fde2" }}
-            >
-              View all posts <ArrowRight size={18} />
-            </Link>
+            <div className="flex justify-center mt-10">
+              <Link
+                to="/blog"
+                className="flex items-center gap-2 py-3 px-8 rounded-2xl font-semibold transition-opacity hover:opacity-80"
+                style={{ backgroundColor: "#013f31", color: "#95fde2" }}
+              >
+                View all posts <ArrowRight size={18} />
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <Resources />
       <SpotlightSection />

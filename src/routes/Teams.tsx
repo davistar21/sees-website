@@ -19,12 +19,8 @@ export type CarouselMember = { name: string; role: string; image: string };
 // ---------------------------------------------------------------------------
 
 export const Carousel = ({ members }: { members?: CarouselMember[] }) => {
-  const defaultMembers: CarouselMember[] = [
-    ...hardcodedDesigners,
-    ...hardcodedDevelopers,
-  ].map((m) => ({ name: m.name, role: m.role, image: m.image }));
-
-  const src = members && members.length > 0 ? members : defaultMembers;
+  const src = members && members.length > 0 ? members : [];
+  if (src.length === 0) return null;
   const doubled = [...src, ...src];
 
   return (
@@ -175,47 +171,6 @@ const TopSection = ({ members }: { members?: CarouselMember[] }) => (
 // Hardcoded fallback data
 // ---------------------------------------------------------------------------
 
-const hardcodedDesigners: Member[] = [
-  {
-    name: "Adewuyi Oyinda",
-    role: "UI/UX Designer",
-    description:
-      "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "tomi.jpg",
-    portfolio: "#",
-    whatsapp_url: "",
-  },
-  {
-    name: "Chinonso Victor",
-    role: "Graphic Designer",
-    description:
-      "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "tomi.jpg",
-    portfolio: "#",
-    whatsapp_url: "",
-  },
-];
-
-const hardcodedDevelopers: Member[] = [
-  {
-    name: "Adewuyi Oyinda",
-    role: "Frontend Developer",
-    description:
-      "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "tomi.jpg",
-    portfolio: "#",
-    whatsapp_url: "",
-  },
-  {
-    name: "Chinonso Victor",
-    role: "Backend Developer",
-    description:
-      "Our vision is to be a globally recognized leader in Electrical and Electronics Engineering, pioneering innovation, and cultivating future-ready engineers.",
-    image: "tomi.jpg",
-    portfolio: "#",
-    whatsapp_url: "",
-  },
-];
 
 // ---------------------------------------------------------------------------
 // Teams page — DB-driven with category grouping
@@ -281,10 +236,7 @@ export default function Teams() {
           <TeamSection key={category} title={category} members={members} />
         ))
       ) : (
-        <>
-          <TeamSection title="Meet The Designers" members={hardcodedDesigners} />
-          <TeamSection title="Meet The Developers" members={hardcodedDevelopers} />
-        </>
+        <p className="text-center text-gray-400 py-20">No team members listed yet.</p>
       )}
     </main>
   );

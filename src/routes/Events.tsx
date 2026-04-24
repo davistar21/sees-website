@@ -244,41 +244,11 @@ const EventTabs = ({ tabs, activeTab, onTabClick }: EventTabsProps) => (
 // Main component
 // ---------------------------------------------------------------------------
 
-const fallbackEvents: DBEvent[] = [
-  {
-    id: "1",
-    title: "SEES Annual Summit",
-    description: null,
-    image_url: "/contentone.jpg",
-    location: "Main Auditorium",
-    event_time: "10:00",
-    event_date: "2025-09-27",
-    category: "Corporate events",
-    is_featured: false,
-    youtube_url: null,
-    gallery_images: [],
-    created_at: "",
-  },
-  {
-    id: "2",
-    title: "SEES Sports Tournament",
-    description: null,
-    image_url: "/contenttwo.jpg",
-    location: "Sports Complex",
-    event_time: "12:00",
-    event_date: "2025-10-15",
-    category: "Sport events",
-    is_featured: false,
-    youtube_url: null,
-    gallery_images: [],
-    created_at: "",
-  },
-];
-
 const TABS = ["Corporate events", "Sport events", "Fun events", "Past events"];
 
 const Events = () => {
   const [events, setEvents] = useState<DBEvent[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Corporate events");
   const [lightboxEvent, setLightboxEvent] = useState<DBEvent | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -290,8 +260,8 @@ const Events = () => {
       .select("*")
       .order("event_date", { ascending: false })
       .then(({ data }) => {
-        if (data && data.length > 0) setEvents(data);
-        else setEvents(fallbackEvents);
+        setEvents(data ?? []);
+        setLoading(false);
       });
 
     supabase
@@ -306,18 +276,16 @@ const Events = () => {
       });
   }, []);
 
-  const displayEvents = events.length > 0 ? events : fallbackEvents;
-
-  // Slider: all event main images
-  const sliderImages = displayEvents
-    .filter((e) => e.image_url)
-    .map((e) => e.image_url as string);
+  // Slider: use real event images; fall back to a static placeholder image (not fake data)
+  const sliderImages = events
+    .filter((e: DBEvent) => e.image_url)
+    .map((e: DBEvent) => e.image_url as string);
 
   // Tab-filtered events: "Past events" shows all events with date before today
   const filteredEvents =
     activeTab === "Past events"
-      ? displayEvents.filter((e) => isPast(e.event_date))
-      : displayEvents.filter((e) => e.category === activeTab);
+      ? events.filter((e: DBEvent) => isPast(e.event_date))
+      : events.filter((e: DBEvent) => e.category === activeTab);
 
   const openLightbox = (event: DBEvent, index = 0) => {
     setLightboxEvent(event);
@@ -396,7 +364,11 @@ const Events = () => {
 
       {/* Event cards */}
       <div className="flex flex-col gap-12 max-w-7xl px-4 md:px-8 mx-auto">
-        {filteredEvents.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 border-2 border-swamp border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <p className="text-center text-gray-400 py-12">
             No events in this category yet.
           </p>
