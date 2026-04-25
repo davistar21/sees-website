@@ -23,6 +23,14 @@ export const Carousel = ({ members }: { members?: CarouselMember[] }) => {
   if (src.length === 0) return null;
   const doubled = [...src, ...src];
 
+  // Constant pixel speed: ~50 px/s regardless of team size.
+  // Card width reference is 200 px (md breakpoint) + 12 px gap.
+  // Works correctly for any number of members — small or very large teams.
+  const CARD_WIDTH = 200;
+  const GAP = 12;
+  const SPEED_PX_PER_S = 50;
+  const duration = Math.max(Math.round((src.length * (CARD_WIDTH + GAP)) / SPEED_PX_PER_S), 20);
+
   return (
     <div className="w-full overflow-hidden relative">
       <div className="absolute left-0 top-0 h-full w-6 bg-gradient-to-r from-gray-50 to-transparent z-10 pointer-events-none" />
@@ -32,19 +40,22 @@ export const Carousel = ({ members }: { members?: CarouselMember[] }) => {
         className="marquee-track flex gap-3"
         style={{
           width: "max-content",
-          animation: "marquee-scroll 18s linear infinite",
+          animation: `marquee-scroll ${duration}s linear infinite`,
         }}
       >
         {doubled.map((member, idx) => (
           <div
             key={idx}
-            className="w-[220px] h-[220px] relative flex-shrink-0 rounded-2xl overflow-hidden"
+            // Taller 3:4 aspect ratio prevents portrait photos from being cropped.
+            // Responsive width: smaller on mobile, full size on md+.
+            className="w-[140px] sm:w-[170px] md:w-[200px] aspect-[3/4] relative flex-shrink-0 rounded-2xl overflow-hidden"
           >
             <img
               src={member.image}
               alt={member.name}
               loading="lazy"
-              className="w-full h-full object-cover"
+              // object-top anchors the crop to the top so faces stay visible
+              className="w-full h-full object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
@@ -153,8 +164,7 @@ const TopSection = ({ members }: { members?: CarouselMember[] }) => (
         <span className="text-gray-700">Visionaries</span>
       </h1>
       <p className="max-w-2xl mx-auto text-gray-600 text-lg mb-8">
-        This team put together the functionality and design of the Society of
-        Electrical and Engineering Students website together.
+        Behind every great movement are individuals bold enough to imagine what is possible and determined enough to make it reality. Our Visionaries are the strategic minds and forward-thinkers who inspire innovation, shape direction, and turn ideas into impactful actions. With passion, leadership, and a commitment to excellence, they drive our mission and pave the way for a brighter future.
       </p>
       <a
         href="mailto:theseesunilagofficial@gmail.com?subject=Inquiry%20from%20SEES%20Website&body=Hello%20SEES%20Team%2C%20I%20hope%20this%20message%20finds%20you%20well.%20My%20name%20is%20%5BYour%20Name%5D%2C%20and%20I%20am%20reaching%20out%20regarding%20%5Byour%20reason%5D.%20Please%20find%20the%20details%20of%20my%20inquiry%20below.%20I%20would%20appreciate%20your%20response%20at%20your%20earliest%20convenience.%20Thank%20you%20for%20your%20time%20and%20consideration.%20Best%20regards%2C%20%5BYour%20Name%5D."
