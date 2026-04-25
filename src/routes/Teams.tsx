@@ -82,7 +82,7 @@ const TeamMemberCard = ({ member, index }: { member: Member; index: number }) =>
     custom={index}
     className="flex flex-col md:flex-row items-center gap-8 md:gap-20 rounded-xl h-auto"
   >
-    <div className="w-full aspect-[4/3] md:aspect-[11/13] md:w-[395px] flex-shrink-0 overflow-hidden rounded-2xl">
+    <div className="w-full aspect-[3/4] md:aspect-[11/13] md:w-[395px] flex-shrink-0 overflow-hidden rounded-2xl">
       <img
         src={member.image}
         alt={member.name}
