@@ -16,7 +16,7 @@ const TopSection = ({ members }: { members: Member[] }) => {
           Meet the Executives
         </h1>
         <p className="max-w-2xl mx-auto text-gray-600 text-lg mb-8">
-          The executives of the Society of Electrical Engineering Students
+          The Executives of the Society of Electrical, Electronics, and Computer Engineering Students
         </p>
         <a
           href="mailto:theseesunilagofficial@gmail.com?subject=Inquiry%20from%20SEES%20Website&body=Hello%20SEES%20Team%2C%20I%20hope%20this%20message%20finds%20you%20well.%20My%20name%20is%20%5BYour%20Name%5D%2C%20and%20I%20am%20reaching%20out%20regarding%20%5Byour%20reason%5D.%20Please%20find%20the%20details%20of%20my%20inquiry%20below.%20I%20would%20appreciate%20your%20response%20at%20your%20earliest%20convenience.%20Thank%20you%20for%20your%20time%20and%20consideration.%20Best%20regards%2C%20%5BYour%20Name%5D."
