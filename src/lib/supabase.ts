@@ -50,16 +50,6 @@ export type Resource = {
   created_at: string
 }
 
-export type HeroSlide = {
-  id: string
-  image_url: string
-  title: string
-  subtitle: string | null
-  display_order: number
-  active: boolean
-  created_at: string
-}
-
 export type Announcement = {
   id: string
   title: string

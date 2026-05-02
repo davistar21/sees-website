@@ -7,9 +7,18 @@ import Resources from "./routes/Resources";
 import ContentCard from "./components/ContentCard";
 import Hod from "./components/Hod";
 import Newsletter from "./components/Newsletter";
-import { supabase, type HeroSlide, type Announcement, type SpotlightPerson } from "./lib/supabase";
+import { supabase, type DBEvent, type Announcement, type SpotlightPerson } from "./lib/supabase";
 import { Link } from "react-router-dom";
-import { ArrowRight, X, ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import {
+  ArrowRight,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  MapPin,
+  CalendarDays,
+  Clock,
+} from "lucide-react";
 
 // ---------------------------------------------------------------------------
 // Announcement banner
@@ -23,7 +32,6 @@ const AnnouncementBanner = ({ items }: { items: Announcement[] }) => {
   const current = items[idx];
 
   return (
-    // top-[87px] on all screens — matches header height (87×87 logo)
     <div className="fixed top-[87px] left-0 right-0 z-40 bg-swamp text-white shadow-md">
       <div className="flex items-start gap-2 px-3 py-2.5">
         {items.length > 1 && (
@@ -281,26 +289,39 @@ const calcTimeLeft = (target: string): TimeLeft => {
   };
 };
 
+const formatDate = (date: string): string =>
+  new Date(date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+const isUpcomingEvent = (ev: DBEvent): boolean => {
+  if (!ev.event_date) return false;
+  return new Date(`${ev.event_date}T${ev.event_time ?? "00:00"}`) > new Date();
+};
+
 // ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
 const App = () => {
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
-  const [currentSlide, setCurrentSlide] = useState<HeroSlide | null>(null);
+  const [heroEvents, setHeroEvents] = useState<DBEvent[]>([]);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, mins: 0 });
   const [posts, setPosts] = useState<BlogPreview[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [countdownTarget, setCountdownTarget] = useState<string | null>(null);
-  const [countdownLabel, setCountdownLabel] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState<TimeLeft>({ days: 0, hours: 0, mins: 0 });
+
+  const currentHeroEvent = heroEvents[heroIndex] ?? null;
+  const countdownTarget =
+    currentHeroEvent && isUpcomingEvent(currentHeroEvent)
+      ? `${currentHeroEvent.event_date}T${currentHeroEvent.event_time ?? "00:00"}`
+      : null;
 
   useEffect(() => {
     supabase
-      .from("hero_slides")
+      .from("events")
       .select("*")
-      .eq("active", true)
-      .order("display_order", { ascending: true })
+      .not("image_url", "is", null)
+      .gte("event_date", new Date().toISOString().split("T")[0])
+      .order("event_date", { ascending: true })
       .then(({ data }) => {
-        if (data && data.length > 0) setSlides(data);
+        if (data && data.length > 0) setHeroEvents(data as DBEvent[]);
       });
 
     supabase
@@ -321,36 +342,18 @@ const App = () => {
       .then(({ data }) => {
         if (data) setAnnouncements(data);
       });
-
-    supabase
-      .from("events")
-      .select("title, event_date, event_time")
-      .eq("is_featured", true)
-      .gte("event_date", new Date().toISOString().split("T")[0])
-      .order("event_date", { ascending: true })
-      .limit(1)
-      .then(({ data }) => {
-        if (data && data[0]?.event_date) {
-          const time = data[0].event_time ?? "00:00";
-          setCountdownTarget(`${data[0].event_date}T${time}`);
-          setCountdownLabel(data[0].title ?? null);
-        }
-      });
   }, []);
 
-  // Slide rotation
+  // Auto-advance hero — resets when events load
   useEffect(() => {
-    if (slides.length === 0) return;
-    let idx = 0;
-    setCurrentSlide(slides[0]);
+    if (heroEvents.length <= 1) return;
     const interval = setInterval(() => {
-      idx = idx === slides.length - 1 ? 0 : idx + 1;
-      setCurrentSlide(slides[idx]);
+      setHeroIndex((i) => (i + 1) % heroEvents.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [slides]);
+  }, [heroEvents.length]);
 
-  // Countdown timer
+  // Countdown — reruns whenever the current event changes
   useEffect(() => {
     if (!countdownTarget) return;
     setTimeLeft(calcTimeLeft(countdownTarget));
@@ -363,52 +366,127 @@ const App = () => {
       <AnnouncementBanner items={announcements} />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div
-        className="main"
-        style={{ backgroundImage: currentSlide ? `url(${currentSlide.image_url})` : undefined }}
-      >
-        <div className="overlay" />
+      <div className="relative h-screen overflow-hidden">
+        {/* Background images — crossfade between events */}
+        {heroEvents.map((ev, i) => (
+          <img
+            key={ev.id}
+            src={ev.image_url!}
+            alt={ev.title}
+            loading={i === 0 ? "eager" : "lazy"}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              i === heroIndex ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
+        {heroEvents.length === 0 && <div className="absolute inset-0 bg-swamp" />}
 
-        {/* Content — absolutely fills the hero, centers text like Events page */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 gap-5 md:gap-8" style={{ zIndex: 2 }}>
-          {currentSlide ? (
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-black/50" />
+
+        {/* Content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4 gap-4 md:gap-5 z-10">
+          {!currentHeroEvent ? (
+            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
             <>
+              {currentHeroEvent.category && (
+                <span className="text-xs font-semibold uppercase tracking-widest text-white/80 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
+                  {currentHeroEvent.category}
+                </span>
+              )}
+
               <h1 className="text-3xl sm:text-5xl md:text-[64px] font-bold text-white leading-tight max-w-4xl">
-                {currentSlide.title}
+                {currentHeroEvent.title}
               </h1>
-              {currentSlide.subtitle && (
-                <p className="text-base sm:text-lg md:text-[24px] font-semibold text-white/90 max-w-3xl">
-                  {currentSlide.subtitle}
+
+              {currentHeroEvent.description && (
+                <p className="text-base sm:text-lg text-white/80 max-w-2xl line-clamp-2">
+                  {currentHeroEvent.description}
                 </p>
               )}
-            </>
-          ) : (
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          )}
 
-          {/* Countdown */}
-          {countdownLabel && (
-            <p className="text-white/70 text-xs sm:text-sm font-medium tracking-widest uppercase -mb-3">
-              Counting down to — {countdownLabel}
-            </p>
+              {(currentHeroEvent.location || currentHeroEvent.event_date || currentHeroEvent.event_time) && (
+                <div className="flex flex-wrap gap-2 justify-center text-sm text-white/90">
+                  {currentHeroEvent.location && (
+                    <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                      <MapPin size={13} /> {currentHeroEvent.location}
+                    </span>
+                  )}
+                  {currentHeroEvent.event_date && (
+                    <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                      <CalendarDays size={13} /> {formatDate(currentHeroEvent.event_date)}
+                    </span>
+                  )}
+                  {currentHeroEvent.event_time && (
+                    <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                      <Clock size={13} /> {currentHeroEvent.event_time}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {isUpcomingEvent(currentHeroEvent) && (
+                <>
+                  <p className="text-white/60 text-xs font-medium tracking-widest uppercase -mb-1">
+                    Counting down
+                  </p>
+                  <div className="countdown">
+                    <div className="time-box">
+                      <div className="number">{String(timeLeft.days).padStart(2, "0")}</div>
+                      <div className="label">Days</div>
+                    </div>
+                    <span className="colon">:</span>
+                    <div className="time-box">
+                      <div className="number">{String(timeLeft.hours).padStart(2, "0")}</div>
+                      <div className="label">Hours</div>
+                    </div>
+                    <span className="colon">:</span>
+                    <div className="time-box">
+                      <div className="number">{String(timeLeft.mins).padStart(2, "0")}</div>
+                      <div className="label">Mins</div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {heroEvents.length > 1 && (
+                <div className="flex gap-2 mt-1">
+                  {heroEvents.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setHeroIndex(i)}
+                      aria-label={`Go to slide ${i + 1}`}
+                      className={`h-2 rounded-full transition-all ${
+                        i === heroIndex ? "w-6 bg-white" : "w-2 bg-white/50 hover:bg-white/80"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
-          <div className="countdown">
-            <div className="time-box">
-              <div className="number">{String(timeLeft.days).padStart(2, "0")}</div>
-              <div className="label">Days</div>
-            </div>
-            <span className="colon">:</span>
-            <div className="time-box">
-              <div className="number">{String(timeLeft.hours).padStart(2, "0")}</div>
-              <div className="label">Hours</div>
-            </div>
-            <span className="colon">:</span>
-            <div className="time-box">
-              <div className="number">{String(timeLeft.mins).padStart(2, "0")}</div>
-              <div className="label">Mins</div>
-            </div>
-          </div>
         </div>
+
+        {/* Prev / Next arrows */}
+        {heroEvents.length > 1 && (
+          <>
+            <button
+              onClick={() => setHeroIndex((i) => (i === 0 ? heroEvents.length - 1 : i - 1))}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/30 text-white rounded-full p-2 hover:bg-black/50 transition-colors"
+              aria-label="Previous event"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={() => setHeroIndex((i) => (i === heroEvents.length - 1 ? 0 : i + 1))}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/30 text-white rounded-full p-2 hover:bg-black/50 transition-colors"
+              aria-label="Next event"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </>
+        )}
       </div>
 
       <Vision />

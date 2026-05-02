@@ -6,7 +6,6 @@ import {
   CalendarDays,
   Users,
   BookOpen,
-  Home,
   Mail,
   LogOut,
   Menu,
@@ -25,7 +24,6 @@ const navItems = [
   { label: "HOD", href: "/admin/hod", icon: UserSquare2 },
   { label: "Resources", href: "/admin/resources", icon: BookOpen },
   { label: "Blog", href: "/admin/blog", icon: Newspaper },
-  { label: "Homepage", href: "/admin/homepage", icon: Home },
   { label: "Newsletter", href: "/admin/newsletter", icon: Mail },
 ];
 
