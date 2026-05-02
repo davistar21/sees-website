@@ -10,7 +10,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { supabase, type DBEvent, type GalleryImage, type FeaturedVideo } from "../lib/supabase";
-import ImageSlider from "../components/ImageSlider";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -253,6 +252,7 @@ const Events = () => {
   const [lightboxEvent, setLightboxEvent] = useState<DBEvent | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [featuredVideo, setFeaturedVideo] = useState<FeaturedVideo | null>(null);
+  const [heroIndex, setHeroIndex] = useState(0);
 
   useEffect(() => {
     supabase
@@ -276,16 +276,38 @@ const Events = () => {
       });
   }, []);
 
-  // Slider: use real event images; fall back to a static placeholder image (not fake data)
-  const sliderImages = events
-    .filter((e: DBEvent) => e.image_url)
-    .map((e: DBEvent) => e.image_url as string);
+  // Events with images sorted: upcoming first, then most-recent past
+  const heroEvents = (() => {
+    const now = new Date();
+    return events
+      .filter((e) => e.image_url)
+      .sort((a, b) => {
+        const aDate = a.event_date ? new Date(a.event_date) : null;
+        const bDate = b.event_date ? new Date(b.event_date) : null;
+        const aFuture = aDate && aDate >= now;
+        const bFuture = bDate && bDate >= now;
+        if (aFuture && bFuture) return aDate!.getTime() - bDate!.getTime();
+        if (!aFuture && !bFuture) return (bDate?.getTime() ?? 0) - (aDate?.getTime() ?? 0);
+        return aFuture ? -1 : 1;
+      });
+  })();
+  const safeHeroIndex = heroEvents.length > 0 ? heroIndex % heroEvents.length : 0;
+  const currentHeroEvent = heroEvents[safeHeroIndex] ?? null;
 
   // Tab-filtered events: "Past events" shows all events with date before today
   const filteredEvents =
     activeTab === "Past events"
       ? events.filter((e: DBEvent) => isPast(e.event_date))
       : events.filter((e: DBEvent) => e.category === activeTab);
+
+  // Auto-advance hero once events have loaded
+  useEffect(() => {
+    if (heroEvents.length <= 1) return;
+    const interval = setInterval(() => {
+      setHeroIndex((i) => (i + 1) % heroEvents.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [heroEvents.length]);
 
   const openLightbox = (event: DBEvent, index = 0) => {
     setLightboxEvent(event);
@@ -296,19 +318,88 @@ const Events = () => {
 
   return (
     <div className="mx-auto w-full pb-8">
-      {/* Hero slider */}
-      <div className="relative w-full overflow-hidden h-screen flex flex-col items-center justify-center">
-        <ImageSlider
-          images={sliderImages.length > 0 ? sliderImages : ["/contentone.jpg"]}
-          className="!absolute -z-10"
-        />
-        <div className="absolute inset-0 bg-black/40 -z-5" />
-        <div className="flex flex-col items-center gap-4 text-center z-10 px-4">
-          <h1 className="text-5xl md:text-[64px] font-semibold text-white">All Events</h1>
+      {/* Hero */}
+      <div className="relative w-full h-screen overflow-hidden">
+        {/* Background images — crossfade with current event */}
+        {heroEvents.map((ev, i) => (
+          <img
+            key={ev.id}
+            src={ev.image_url!}
+            alt={ev.title}
+            loading={i === 0 ? "eager" : "lazy"}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+              i === safeHeroIndex ? "opacity-100" : "opacity-0"
+            }`}
+          />
+        ))}
+        {heroEvents.length === 0 && <div className="absolute inset-0 bg-swamp" />}
+
+        <div className="absolute inset-0 bg-black/40" />
+
+        <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-4 gap-4">
+          {currentHeroEvent?.category && (
+            <span className="text-xs font-semibold uppercase tracking-widest text-white/80 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full border border-white/20">
+              {currentHeroEvent.category}
+            </span>
+          )}
+
+          <h1 className="text-5xl md:text-[64px] font-semibold text-white">
+            {currentHeroEvent ? currentHeroEvent.title : "All Events"}
+          </h1>
+
           <span className="text-lg md:text-[24px] font-semibold text-white/90">
             View catchy and exciting stories from past and upcoming events
           </span>
+
+          {currentHeroEvent && (currentHeroEvent.location || currentHeroEvent.event_date) && (
+            <div className="flex flex-wrap gap-2 justify-center text-sm text-white/90">
+              {currentHeroEvent.location && (
+                <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                  <MapPin size={13} /> {currentHeroEvent.location}
+                </span>
+              )}
+              {currentHeroEvent.event_date && (
+                <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-sm px-3 py-1 rounded-full">
+                  <CalendarDays size={13} /> {formatDate(currentHeroEvent.event_date)}
+                </span>
+              )}
+            </div>
+          )}
+
+          {heroEvents.length > 1 && (
+            <div className="flex gap-2 mt-1">
+              {heroEvents.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setHeroIndex(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`h-2 rounded-full transition-all ${
+                    i === safeHeroIndex ? "w-6 bg-white" : "w-2 bg-white/50 hover:bg-white/80"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
+
+        {heroEvents.length > 1 && (
+          <>
+            <button
+              onClick={() => setHeroIndex((i) => (i === 0 ? heroEvents.length - 1 : i - 1))}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/30 text-white rounded-full p-2 hover:bg-black/50 transition-colors"
+              aria-label="Previous event"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button
+              onClick={() => setHeroIndex((i) => (i === heroEvents.length - 1 ? 0 : i + 1))}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/30 text-white rounded-full p-2 hover:bg-black/50 transition-colors"
+              aria-label="Next event"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Featured video section */}

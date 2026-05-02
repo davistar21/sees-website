@@ -73,54 +73,111 @@ export const Carousel = ({ members }: { members?: CarouselMember[] }) => {
 // Team member card
 // ---------------------------------------------------------------------------
 
-const TeamMemberCard = ({ member, index }: { member: Member; index: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 40 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.5, ease: easeInOut }}
-    viewport={{ once: true, amount: 0.3 }}
-    custom={index}
-    className="flex flex-col md:flex-row items-center gap-8 md:gap-20 rounded-xl h-auto"
-  >
-    <div className="w-full aspect-[3/4] md:aspect-[11/13] md:w-[395px] flex-shrink-0 overflow-hidden rounded-2xl">
-      <img
-        src={member.image}
-        alt={member.name}
-        loading="lazy"
-        className="object-cover object-top w-full h-full"
-      />
-    </div>
+// "grid" = compact vertical card (Teams page)
+// "list" = wide horizontal card (Executives page)
+const TeamMemberCard = ({
+  member,
+  index,
+  layout = "grid",
+}: {
+  member: Member;
+  index: number;
+  layout?: "grid" | "list";
+}) => {
+  if (layout === "list") {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: easeInOut }}
+        viewport={{ once: true, amount: 0.3 }}
+        className="flex flex-col md:flex-row items-center gap-8 md:gap-20 rounded-xl h-auto"
+      >
+        <div className="w-full aspect-[3/4] md:aspect-[11/13] md:w-[395px] flex-shrink-0 overflow-hidden rounded-2xl">
+          <img
+            src={member.image}
+            alt={member.name}
+            loading="lazy"
+            className="object-cover object-top w-full h-full"
+          />
+        </div>
+        <div className="flex-1 text-center md:text-left flex flex-col gap-px h-full min-h-[380px]">
+          <h3 className="text-[36px] font-semibold text-swamp">{member.name}</h3>
+          <p className="text-gray-500 font-medium mb-3 text-base">{member.role}</p>
+          <p className="text-gray-700 mb-6 text-xl">{member.description}</p>
+          <div className="flex gap-4 mt-4 md:mt-auto justify-around md:justify-start">
+            {member.portfolio && member.portfolio !== "#" && (
+              <a
+                href={member.portfolio}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-swamp text-white font-semibold px-6 py-2 rounded-2xl bg-swamp hover:text-green-200 transition-all duration-300 flex gap-2 items-center"
+              >
+                <Link2 size={20} /> Portfolio
+              </a>
+            )}
+            {member.whatsapp_url && (
+              <a
+                href={member.whatsapp_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-2 border-swamp text-swamp font-semibold py-3 px-8 rounded-2xl hover:bg-swamp hover:text-white transition-all flex items-center gap-2"
+              >
+                <PhoneForwarded size={20} />
+              </a>
+            )}
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
 
-    <div className="flex-1 text-center md:text-left flex flex-col gap-px h-full min-h-[380px]">
-      <h3 className="text-[36px] font-semibold text-swamp">{member.name}</h3>
-      <p className="text-gray-500 font-medium mb-3 text-base">{member.role}</p>
-      <p className="text-gray-700 mb-6 text-xl">{member.description}</p>
-      <div className="flex gap-4 mt-4 md:mt-auto justify-around md:justify-start">
-        {member.portfolio && member.portfolio !== "#" && (
-          <a
-            href={member.portfolio}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border border-swamp text-white font-semibold px-6 py-2 rounded-2xl bg-swamp hover:text-green-200 transition-all duration-300 flex gap-2 items-center"
-          >
-            <Link2 size={20} />
-            Portfolio
-          </a>
-        )}
-        {member.whatsapp_url && (
-          <a
-            href={member.whatsapp_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="border-2 border-swamp text-swamp font-semibold py-3 px-8 rounded-2xl hover:bg-swamp hover:text-white transition-all flex items-center gap-2"
-          >
-            <PhoneForwarded size={20} />
-          </a>
-        )}
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.45, ease: easeInOut, delay: (index % 3) * 0.08 }}
+      viewport={{ once: true, amount: 0.2 }}
+      className="flex flex-col rounded-2xl overflow-hidden bg-white border border-gray-100 shadow-sm hover:shadow-md transition-shadow"
+    >
+      <div className="w-full aspect-[3/4] overflow-hidden">
+        <img
+          src={member.image}
+          alt={member.name}
+          loading="lazy"
+          className="object-cover object-top w-full h-full"
+        />
       </div>
-    </div>
-  </motion.div>
-);
+      <div className="flex flex-col gap-1 p-5 flex-1">
+        <h3 className="text-xl font-semibold text-swamp">{member.name}</h3>
+        <p className="text-gray-500 font-medium text-sm mb-2">{member.role}</p>
+        <p className="text-gray-700 text-sm leading-relaxed flex-1">{member.description}</p>
+        <div className="flex gap-3 mt-4">
+          {member.portfolio && member.portfolio !== "#" && (
+            <a
+              href={member.portfolio}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 bg-swamp text-white font-semibold px-4 py-2 rounded-xl text-sm hover:text-green-200 transition-all"
+            >
+              <Link2 size={15} /> Portfolio
+            </a>
+          )}
+          {member.whatsapp_url && (
+            <a
+              href={member.whatsapp_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="border-2 border-swamp text-swamp font-semibold p-2 rounded-xl hover:bg-swamp hover:text-white transition-all flex items-center"
+            >
+              <PhoneForwarded size={15} />
+            </a>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 // ---------------------------------------------------------------------------
 // TeamSection
@@ -129,9 +186,10 @@ const TeamMemberCard = ({ member, index }: { member: Member; index: number }) =>
 type TeamSectionProps = {
   title: string;
   members: Member[];
+  layout?: "grid" | "list";
 };
 
-export const TeamSection = ({ title, members }: TeamSectionProps) => (
+export const TeamSection = ({ title, members, layout = "grid" }: TeamSectionProps) => (
   <section className="w-full max-w-7xl mx-auto my-24 px-4">
     <motion.h2
       initial={{ opacity: 0, y: 20 }}
@@ -143,9 +201,9 @@ export const TeamSection = ({ title, members }: TeamSectionProps) => (
       {title}
     </motion.h2>
 
-    <div className="flex flex-col gap-16">
+    <div className={layout === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-16"}>
       {members.map((member, i) => (
-        <TeamMemberCard member={member} key={i} index={i} />
+        <TeamMemberCard member={member} key={i} index={i} layout={layout} />
       ))}
     </div>
   </section>

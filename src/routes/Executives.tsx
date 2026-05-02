@@ -66,7 +66,7 @@ const Executives = () => {
           No executives listed yet.
         </p>
       ) : (
-        <TeamSection title="Meet the Executives" members={members} />
+        <TeamSection title="Meet the Executives" members={members} layout="list" />
       )}
     </main>
   );
