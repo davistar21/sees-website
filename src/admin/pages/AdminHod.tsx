@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, type HodProfile } from "../../lib/supabase";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 import { Field, inputClass } from "../components/FormField";
 
 const AdminHod = () => {
@@ -52,12 +53,11 @@ const AdminHod = () => {
 
   const uploadImage = async (): Promise<string | null> => {
     if (!imageFile) return form.image_url || null;
-    const ext = imageFile.name.split(".").pop();
-    const path = `hod/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("images").upload(path, imageFile);
-    if (error) return form.image_url || null;
-    const { data } = supabase.storage.from("images").getPublicUrl(path);
-    return data.publicUrl;
+    try {
+      return await uploadToCloudinary(imageFile, "hod");
+    } catch {
+      return form.image_url || null;
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {

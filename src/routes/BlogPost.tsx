@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { optimizeUrl } from "../lib/cloudinary";
 import { Clock, ArrowLeft, User } from "lucide-react";
 
 type BlogPost = {
@@ -78,9 +79,11 @@ const BlogPost = () => {
       {post.image_url && (
         <div className="w-full h-[50vh] overflow-hidden">
           <img
-            src={post.image_url}
+            src={optimizeUrl(post.image_url, 1200)}
             alt={post.title}
             loading="eager"
+            decoding="async"
+            fetchPriority="high"
             className="w-full h-full object-cover"
           />
         </div>

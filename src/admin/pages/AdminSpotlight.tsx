@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase, type SpotlightPerson } from "../../lib/supabase";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 import { Plus, Pencil, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { Field, Modal, ModalActions, inputClass } from "../components/FormField";
 
@@ -87,12 +88,11 @@ const AdminSpotlight = () => {
 
   const uploadPhoto = async (): Promise<string | null> => {
     if (!imageFile) return form.image_url || null;
-    const ext = imageFile.name.split(".").pop();
-    const path = `spotlight/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("images").upload(path, imageFile);
-    if (error) return form.image_url || null;
-    const { data } = supabase.storage.from("images").getPublicUrl(path);
-    return data.publicUrl;
+    try {
+      return await uploadToCloudinary(imageFile, "spotlight");
+    } catch {
+      return form.image_url || null;
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {

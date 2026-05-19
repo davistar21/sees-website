@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   Field,
@@ -104,12 +105,11 @@ const AdminTeams = () => {
 
   const uploadImage = async (): Promise<string | null> => {
     if (!imageFile) return form.image_url || null;
-    const ext = imageFile.name.split(".").pop();
-    const path = `teams/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("images").upload(path, imageFile);
-    if (error) return form.image_url || null;
-    const { data } = supabase.storage.from("images").getPublicUrl(path);
-    return data.publicUrl;
+    try {
+      return await uploadToCloudinary(imageFile, "teams");
+    } catch {
+      return form.image_url || null;
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
