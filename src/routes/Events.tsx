@@ -10,6 +10,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { supabase, type DBEvent, type GalleryImage, type FeaturedVideo } from "../lib/supabase";
+import { optimizeUrl } from "../lib/cloudinary";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -92,9 +93,10 @@ const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         <img
-          src={images[idx].url}
+          src={optimizeUrl(images[idx].url, 1200)}
           alt={images[idx].description}
           loading="lazy"
+          decoding="async"
           className="max-h-[70vh] max-w-full object-contain rounded-xl"
         />
 
@@ -129,9 +131,10 @@ const Lightbox = ({ images, initialIndex, onClose }: LightboxProps) => {
           {images.map((img, i) => (
             <img
               key={i}
-              src={img.url}
+              src={optimizeUrl(img.url, 96)}
               alt=""
               loading="lazy"
+              decoding="async"
               onClick={() => setIdx(i)}
               className={`w-12 h-12 object-cover rounded-lg cursor-pointer border-2 transition-all ${
                 i === idx ? "border-[#95fde2]" : "border-transparent opacity-60 hover:opacity-100"
@@ -161,9 +164,10 @@ const EventCard = ({ event, onViewHighlights }: EventCardProps) => {
       <div className="shadow-sm w-full md:w-[515px] min-h-[300px] md:h-[411px] relative overflow-hidden rounded-[20px] bg-black/40 flex flex-col px-4 py-2 flex-shrink-0">
         {event.image_url && (
           <img
-            src={event.image_url}
+            src={optimizeUrl(event.image_url, 1030)}
             alt={event.title}
             loading="lazy"
+            decoding="async"
             className="absolute inset-0 w-full h-full object-cover -z-10"
           />
         )}
@@ -204,9 +208,10 @@ const EventCard = ({ event, onViewHighlights }: EventCardProps) => {
           {gallery.map((img, h) => (
             <img
               key={h}
-              src={img.url}
+              src={optimizeUrl(img.url, 160)}
               alt={img.description || `Gallery ${h + 1}`}
               loading="lazy"
+              decoding="async"
               className="w-14 h-14 md:w-20 md:h-20 object-cover rounded-md cursor-pointer hover:opacity-80 transition-opacity"
               onClick={() => onViewHighlights(event)}
             />
@@ -324,9 +329,11 @@ const Events = () => {
         {heroEvents.map((ev, i) => (
           <img
             key={ev.id}
-            src={ev.image_url!}
+            src={optimizeUrl(ev.image_url, 1920)}
             alt={ev.title}
             loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={i === 0 ? "high" : "low"}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
               i === safeHeroIndex ? "opacity-100" : "opacity-0"
             }`}

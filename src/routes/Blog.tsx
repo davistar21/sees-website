@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { optimizeUrl } from "../lib/cloudinary";
 import { Clock, ArrowUpRight } from "lucide-react";
 
 type BlogPost = {
@@ -117,9 +118,10 @@ const Blog = () => {
               >
                 <div className="aspect-[16/9] overflow-hidden">
                   <img
-                    src={post.image_url ?? "/contentone.jpg"}
+                    src={optimizeUrl(post.image_url, 800) || "/contentone.jpg"}
                     alt={post.title}
                     loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase, type DBEvent, type GalleryImage, type FeaturedVideo } from "../../lib/supabase";
+import { uploadToCloudinary } from "../../lib/cloudinary";
 import { Plus, Pencil, Trash2, X, Image, ToggleLeft, ToggleRight } from "lucide-react";
 import {
   Field,
@@ -116,12 +117,11 @@ const AdminEvents = () => {
   };
 
   const uploadFile = async (file: File, folder: string): Promise<string | null> => {
-    const ext = file.name.split(".").pop();
-    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("images").upload(path, file);
-    if (error) return null;
-    const { data } = supabase.storage.from("images").getPublicUrl(path);
-    return data.publicUrl;
+    try {
+      return await uploadToCloudinary(file, folder);
+    } catch {
+      return null;
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {

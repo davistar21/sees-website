@@ -2,6 +2,7 @@ import { easeInOut, motion } from "framer-motion";
 import { Link2, PhoneForwarded } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import { optimizeUrl } from "../lib/cloudinary";
 
 export type Member = {
   name: string;
@@ -51,10 +52,10 @@ export const Carousel = ({ members }: { members?: CarouselMember[] }) => {
             className="w-[140px] sm:w-[170px] md:w-[200px] aspect-[3/4] relative flex-shrink-0 rounded-2xl overflow-hidden"
           >
             <img
-              src={member.image}
+              src={optimizeUrl(member.image, 400)}
               alt={member.name}
               loading="lazy"
-              // object-top anchors the crop to the top so faces stay visible
+              decoding="async"
               className="w-full h-full object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
@@ -95,9 +96,10 @@ const TeamMemberCard = ({
       >
         <div className="w-full aspect-[3/4] md:aspect-[11/13] md:w-[395px] flex-shrink-0 overflow-hidden rounded-2xl">
           <img
-            src={member.image}
+            src={optimizeUrl(member.image, 800)}
             alt={member.name}
             loading="lazy"
+            decoding="async"
             className="object-cover object-top w-full h-full"
           />
         </div>
@@ -142,9 +144,10 @@ const TeamMemberCard = ({
     >
       <div className="w-full aspect-[3/4] overflow-hidden">
         <img
-          src={member.image}
+          src={optimizeUrl(member.image, 600)}
           alt={member.name}
           loading="lazy"
+          decoding="async"
           className="object-cover object-top w-full h-full"
         />
       </div>

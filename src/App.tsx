@@ -8,6 +8,7 @@ import ContentCard from "./components/ContentCard";
 import Hod from "./components/Hod";
 import Newsletter from "./components/Newsletter";
 import { supabase, type DBEvent, type Announcement, type SpotlightPerson } from "./lib/supabase";
+import { optimizeUrl } from "./lib/cloudinary";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -98,9 +99,10 @@ const SpotlightModal = ({ person, onClose }: { person: SpotlightPerson; onClose:
         {person.image_url && (
           <div className="w-full h-48 relative overflow-hidden">
             <img
-              src={person.image_url}
+              src={optimizeUrl(person.image_url, 600)}
               alt={person.name}
               loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -223,9 +225,10 @@ const SpotlightSection = () => {
               <div className="relative w-full h-[300px] rounded-2xl overflow-hidden">
                 {person.image_url ? (
                   <img
-                    src={person.image_url}
+                    src={optimizeUrl(person.image_url, 480)}
                     alt={person.name}
                     loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
@@ -371,9 +374,11 @@ const App = () => {
         {heroEvents.map((ev, i) => (
           <img
             key={ev.id}
-            src={ev.image_url!}
+            src={optimizeUrl(ev.image_url, 1920)}
             alt={ev.title}
             loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={i === 0 ? "high" : "low"}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
               i === heroIndex ? "opacity-100" : "opacity-0"
             }`}
